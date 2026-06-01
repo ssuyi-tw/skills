@@ -2,11 +2,13 @@
 
 Personal Claude skills, managed with [GNU stow](https://www.gnu.org/software/stow/).
 
-Installed via `stow` rather than an npm wrapper.
+Installed via `stow` rather than an npm wrapper. Also includes optional home-level Claude guidance.
 
 ## Credits
 
-`blunt-mode` is a terser, blunter cousin of [`caveman`](https://github.com/mattpocock/skills/tree/main/skills/productivity/caveman) by Matt Pocock.
+Home-level `CLAUDE.md` is adapted from [`multica-ai/andrej-karpathy-skills`](https://github.com/multica-ai/andrej-karpathy-skills).
+
+`blunt-mode` is a terser, blunter cousin of [`caveman`](https://github.com/JuliusBrussee/caveman) by Julius Brussee.
 
 `handoff` is from [ykdojo/claude-code-tips](https://github.com/ykdojo/claude-code-tips/blob/main/skills/handoff/SKILL.md) by YK.
 
@@ -14,8 +16,11 @@ Installed via `stow` rather than an npm wrapper.
 
 Each skill lives in a "doubled" directory — the outer dir is the stow package, the inner dir is the skill itself:
 
-```
+```text
 skills/
+├── karpathy-guidelines/        <- stow package for home-level Claude guidance
+│   └── .claude/
+│       └── karpathy-guidelines.md
 ├── LICENSE
 ├── Makefile
 ├── README.md
@@ -42,6 +47,14 @@ make install
 2. Create `~/.agent/skills` as a symlink to `~/.claude/skills/`.
 3. Stow every skill in this repo into `~/.agent/skills/`, which transparently lands in `~/.claude/skills/`.
 
+## Install Karpathy guidelines
+
+This keeps your existing `~/.claude/CLAUDE.md` as the aggregator. It stows only `karpathy-guidelines.md`, then adds `@karpathy-guidelines.md` to `~/.claude/CLAUDE.md` if missing.
+
+```bash
+make install-karpathy-guidelines
+```
+
 ## Add a new skill
 
 ```bash
@@ -64,6 +77,14 @@ Only needed when you add/remove files (existing file edits are reflected automat
 make restow
 ```
 
+## Refresh home guidance
+
+Only needed when you add/remove files under a home package:
+
+```bash
+make restow-home
+```
+
 ## Inspect state
 
 ```bash
@@ -73,7 +94,7 @@ make doctor    # resolved paths and current symlink state
 
 ## How it works
 
-```
+```text
 skills/<name>/<name>/         (source — this repo)
        │
        │  stow links into
@@ -86,6 +107,23 @@ skills/<name>/<name>/         (source — this repo)
 ```
 
 The `~/.agent/skills` indirection means the same source can later be pointed at a different agent's skill dir without reorganizing this repo.
+
+Home guidance uses a separate stow target:
+
+```text
+karpathy-guidelines/.claude/karpathy-guidelines.md
+                                  (source file — this repo)
+       │
+       │  stow links into
+       ▼
+~/.claude/karpathy-guidelines.md
+```
+
+`make install-karpathy-guidelines` then adds this import to your existing aggregator:
+
+```markdown
+@karpathy-guidelines.md
+```
 
 ## License
 
