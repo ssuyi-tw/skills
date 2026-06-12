@@ -1,0 +1,150 @@
+{
+  "_comment": "Planted-ground-truth corpus for evaluating distill OUTPUT quality. Each fixture targets a property. Transcripts are synthetic. truth fields: must_recover (durable signal that should appear), must_drop (work mechanics that should NOT appear), must_not_park (forward next-steps that must go to handoff, not the Parking lot), must_not_fabricate (conclusions never actually reached), expect_foundation_mark (whether at least one item should be tagged compounding), length_expectation (density calibration).",
+  "fixtures": [
+    {
+      "id": "thin-directive",
+      "targets": "density->length (low end), no-padding",
+      "density": "thin",
+      "transcript": [
+        {"role": "user", "content": "rename the variable `tmp` to `userCount` in stats.js"},
+        {"role": "assistant", "content": "Done — renamed all 3 occurrences in stats.js."},
+        {"role": "user", "content": "bump the version in package.json to 2.1.0"},
+        {"role": "assistant", "content": "Updated version to 2.1.0."},
+        {"role": "user", "content": "add a trailing newline to README.md"},
+        {"role": "assistant", "content": "Added."},
+        {"role": "user", "content": "run the linter"},
+        {"role": "assistant", "content": "Linter passed, no issues."}
+      ],
+      "truth": {
+        "must_recover": [],
+        "must_drop": ["renamed tmp to userCount", "bumped version to 2.1.0", "added trailing newline", "ran the linter"],
+        "must_not_park": [],
+        "must_not_fabricate": ["any decision, lesson, or insight — none were generated"],
+        "expect_foundation_mark": false,
+        "length_expectation": "Near-empty: at most a one-line 'little/nothing worth distilling'. Any filled-in sections are padding and a FAIL."
+      }
+    },
+    {
+      "id": "dense-exploratory",
+      "targets": "density->length (high end), recall, mechanism-stripping",
+      "density": "dense",
+      "transcript": [
+        {"role": "user", "content": "our API is slow, I think it's the JSON serialization. add a cache?"},
+        {"role": "assistant", "content": "Before adding a cache — have we profiled? Let me check where the time actually goes."},
+        {"role": "assistant", "content": "Profiled: serialization is ~5ms, but the upstream network call is ~180ms. The bottleneck is the network, not serialization."},
+        {"role": "user", "content": "huh. ok, cache the upstream responses then."},
+        {"role": "assistant", "content": "Right. For invalidation — timestamp-based or content-hash?"},
+        {"role": "user", "content": "does it matter here?"},
+        {"role": "assistant", "content": "Yes — we run multiple workers and their clocks skew by seconds, so timestamp invalidation serves stale or evicts fresh entries inconsistently. Content-hash is clock-independent."},
+        {"role": "user", "content": "content-hash then. write-through or write-back?"},
+        {"role": "assistant", "content": "Write-through. Write-back risks losing unflushed entries if a worker crashes, and these are billable upstream responses we don't want to refetch."},
+        {"role": "user", "content": "agreed, write-through. implement it."},
+        {"role": "assistant", "content": "Edited cache.js, added a contentHash() helper, wired write-through. Tests green."}
+      ],
+      "truth": {
+        "must_recover": [
+          "The bottleneck was the network call (~180ms), not serialization — profiling redirected the work; measure before optimizing",
+          "Chose content-hash invalidation over timestamp because worker clock skew makes timestamp invalidation serve stale / evict fresh entries",
+          "Chose write-through over write-back: write-back can lose unflushed billable upstream responses on a worker crash"
+        ],
+        "must_drop": ["edited cache.js", "added a contentHash() helper", "tests green / ran tests"],
+        "must_not_park": [],
+        "must_not_fabricate": [],
+        "expect_foundation_mark": true,
+        "length_expectation": "Fuller — a dense session. Should recover all three planted items; 2-4 distinct entries is right, each a sentence or two — paragraph-essay entries are over-writing. (The profiling redirect is mark-worthy: a measurement overturned the user's stated belief.)"
+      }
+    },
+    {
+      "id": "next-steps-trap",
+      "targets": "parking-lot vs handoff boundary, recall, foundation-mark bar",
+      "density": "medium",
+      "_note": "User-calibrated (iteration 1): the planted lesson is borderline-worth-recording and assistant-originated (no correction, no dictated rule, no unrederivable context) — recordable, but NOT foundation-marked.",
+      "transcript": [
+        {"role": "user", "content": "the export button downloads an empty CSV. fix it."},
+        {"role": "assistant", "content": "The export handler builds rows from `state.filtered`, but with no active filter `filtered` is null, so it exports nothing. Falling back to `state.all`. Fixed."},
+        {"role": "user", "content": "why was filtered null and not an empty array?"},
+        {"role": "assistant", "content": "The reducer only sets `filtered` on the first filter action; before that it's the initial null. The deeper issue is the initial state lies about its shape — `filtered` should start as [] so no consumer has to special-case null."},
+        {"role": "user", "content": "good point, that's the fix. a few follow-ups for later: audit the other reducers for the same null-init pattern, add a CSV integration test, and confirm the prod export quota is still 10k rows. but those are for later."},
+        {"role": "assistant", "content": "Noted."}
+      ],
+      "truth": {
+        "must_recover": ["Initial state should not lie about its shape — initialize `filtered` as [] so consumers never special-case null (the empty-CSV bug was a symptom of this)"],
+        "must_drop": ["fell back to state.all / fixed the handler"],
+        "must_not_park": [
+          "audit the other reducers for the same null-init pattern",
+          "add a CSV integration test",
+          "confirm the prod export quota is still 10k rows"
+        ],
+        "must_not_fabricate": [],
+        "expect_foundation_mark": false,
+        "length_expectation": "Short. One terse entry, a sentence or two — no heading scaffold needed for a single insight. The lesson is assistant-originated general practice, so no foundation mark. The three follow-ups are forward next-steps (handoff), NOT parking-lot items — they must not appear under a Parking lot heading."
+      }
+    },
+    {
+      "id": "user-correction",
+      "targets": "recall of correction-derived lesson (the most-missed signal)",
+      "density": "medium",
+      "transcript": [
+        {"role": "user", "content": "add retry logic to the payment call."},
+        {"role": "assistant", "content": "I'll wrap it in 3 attempts with exponential backoff."},
+        {"role": "user", "content": "no — payments aren't idempotent. blindly retrying can double-charge. you need an idempotency key first, then retry is safe."},
+        {"role": "assistant", "content": "You're right. I'll generate an idempotency key per payment intent and send it on every attempt, so the server dedupes retries. Then the backoff is safe."},
+        {"role": "user", "content": "yes. the rule is: never retry a non-idempotent operation without an idempotency key."},
+        {"role": "assistant", "content": "Implemented the idempotency key and the retry."}
+      ],
+      "truth": {
+        "must_recover": ["Never retry a non-idempotent operation without an idempotency key — blind retry of payments risks double-charging; the key lets the server dedupe retries"],
+        "must_drop": ["implemented the idempotency key and the retry"],
+        "must_not_park": [],
+        "must_not_fabricate": [],
+        "expect_foundation_mark": true,
+        "length_expectation": "Short. The single durable lesson came from the user correcting the assistant — it must be recovered, not glossed as local feedback. One terse entry at the strength the user stated the rule; a title-plus-heading-plus-bold-elaboration scaffold around one lesson is padding."
+      }
+    },
+    {
+      "id": "unresolved-question",
+      "targets": "no-fabrication, correct parking-lot use (open question, not a todo)",
+      "density": "thin",
+      "_note": "Deliberately principle-free: the assistant gives NO tradeoff reasoning, so there is nothing portable/foundation-grade to extract — only a deferred project question. User-calibrated (iteration 1): deflecting the tabled question to handoff via NOTHING TO DISTILL is correct behavior, so recall is not required here — the failure modes are fabrication and padding.",
+      "transcript": [
+        {"role": "user", "content": "should we move auth into its own service?"},
+        {"role": "assistant", "content": "Could go either way. Want me to dig into the tradeoffs?"},
+        {"role": "user", "content": "not right now. let's revisit after Q3 planning."},
+        {"role": "assistant", "content": "Okay — tabled until Q3 planning."}
+      ],
+      "truth": {
+        "must_recover": [],
+        "must_drop": [],
+        "must_not_park": [],
+        "must_not_fabricate": ["a decision to split auth", "a decision NOT to split auth — it was only deferred", "any tradeoff or rationale the assistant did not actually give (none was offered)"],
+        "expect_foundation_mark": false,
+        "length_expectation": "Very short. Either NOTHING TO DISTILL (the tabled question routed to handoff) or a single one-line Parking lot entry naming the auth split — both correct. Never a Decision. No foundation mark, no chain."
+      }
+    },
+    {
+      "id": "shared-rationale-trap",
+      "targets": "no-duplication (general model and specific decision share one rationale), recall",
+      "density": "medium",
+      "_note": "Modeled on a real failure: the session mints a general model AND a decision that applies it. The trap is re-explaining the model's why inside the Decision entry (or as a corollary inside the Concept) — the rationale must have exactly one home; the Decision carries only the call plus its instance-specific ground (order-insensitive consumer). User-calibrated (iteration 1): the round-trip concept is assistant-explained textbook theory — worth a terse line, NOT worth persisting, so no foundation mark.",
+      "transcript": [
+        {"role": "user", "content": "staging broke after the config migration but CI was green. how?"},
+        {"role": "assistant", "content": "The migration test asserts parse(serialize(parse(file))) === parse(file) — a round-trip. But the serializer normalizes key order on both sides of the comparison, so the test only proves the pipeline agrees with itself: it validates self-consistency, not fidelity to the original file. The key reordering it let through is exactly what broke staging's order-sensitive INI reader."},
+        {"role": "user", "content": "ugh. ok — do we block tomorrow's release on this?"},
+        {"role": "assistant", "content": "I'd ship. The only remaining consumer of this config after the migration is the new loader, which reads it as a map — order-insensitive. The INI reader is deleted by this same migration, so this instance of the bug class can't recur."},
+        {"role": "user", "content": "agreed, ship it. good catch on the test gap."},
+        {"role": "assistant", "content": "Done — migration merged, release notes updated."}
+      ],
+      "truth": {
+        "must_recover": [
+          "A round-trip test validates self-consistency, not fidelity to the original — drift the pipeline applies symmetrically (the serializer's key reordering) passes the check while the output diverges from the source file",
+          "Shipped the release despite the known key reordering: the only remaining consumer reads the config order-insensitively and the order-sensitive reader is deleted by the same migration"
+        ],
+        "must_drop": ["migration merged", "release notes updated"],
+        "must_not_park": [],
+        "must_not_fabricate": [],
+        "expect_foundation_mark": false,
+        "length_expectation": "Short-medium, 2 terse entries (or 1 combined). The model and the decision share ONE rationale and it must appear exactly once: a Concept explaining self-consistency-vs-fidelity AND a Decision re-explaining that same why is duplication. The Decision's own ground (order-insensitive consumer, reader deleted) is distinct and fine to state there. No foundation mark: the concept is assistant-originated theory, the decision is project-specific."
+      }
+    }
+  ]
+}
