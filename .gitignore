@@ -1,1 +1,10 @@
 .DS_Store
+
+# skill-creator eval run scratch (snapshots, raw results, benchmarks)
+*-workspace/
+
+# one-off distill outputs at repo root (staging artifacts, not source).
+# Root-anchored so they don't catch docs/distill.md, which is tracked
+# documentation (core.ignorecase=true makes an unanchored DISTILL.md match it).
+/DISTILL.md
+/a.md
