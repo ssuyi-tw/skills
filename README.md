@@ -4,6 +4,15 @@ Personal Claude skills, managed with [GNU stow](https://www.gnu.org/software/sto
 
 Installed via `stow` rather than an npm wrapper. Also includes optional home-level Claude guidance.
 
+## Skills
+
+| Skill | What it does |
+| --- | --- |
+| [`blunt-mode`](blunt-mode/blunt-mode/SKILL.md) | Terse dev-chat register — strips filler and hedging, keeps every concrete fact. |
+| [`distill`](distill/distill/SKILL.md) | Distills a session into a one-off `DISTILL.md` of concepts and reasoning. See [docs/distill.md](docs/distill.md). |
+| [`greeting`](greeting/greeting/SKILL.md) | Casual greeting register when you open with "hi" / "hey" / etc. |
+| [`handoff`](handoff/handoff/SKILL.md) | Writes a handoff doc so the next agent can continue the work. |
+
 ## Credits
 
 Home-level `CLAUDE.md` is adapted from [`multica-ai/andrej-karpathy-skills`](https://github.com/multica-ai/andrej-karpathy-skills).
