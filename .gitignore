@@ -3,6 +3,9 @@
 # skill-creator eval run scratch (snapshots, raw results, benchmarks)
 *-workspace/
 
+# distill eval — kept local, never committed (folder may not exist until you set eval up again)
+/distill-eval/
+
 # one-off distill outputs at repo root (staging artifacts, not source).
 # Root-anchored so they don't catch docs/distill.md, which is tracked
 # documentation (core.ignorecase=true makes an unanchored DISTILL.md match it).
