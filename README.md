@@ -8,6 +8,7 @@ Installed via `stow` rather than an npm wrapper. Also includes optional home-lev
 
 | Skill | What it does |
 | --- | --- |
+| [`aeq`](aeq/aeq/SKILL.md) | Drives the private, per-repo agentic-engineering task queue (`aeq` CLI). See [docs/agentic-engineering.md](docs/agentic-engineering.md). |
 | [`blunt-mode`](blunt-mode/blunt-mode/SKILL.md) | Terse dev-chat register — strips filler and hedging, keeps every concrete fact. |
 | [`distill`](distill/distill/SKILL.md) | Distills a session into a one-off `DISTILL.md` of durable concepts and reasoning — decisions, models, lessons. Manual (`/distill`). See [docs/distill.md](docs/distill.md). |
 | [`greeting`](greeting/greeting/SKILL.md) | Casual greeting register when you open with "hi" / "hey" / etc. |
@@ -100,6 +101,15 @@ make uninstall-git-guardrails
 ```
 
 This unregisters the hook from `settings.json` and unstows the script.
+
+## Install the aeq queue CLI
+
+The [`aeq`](docs/agentic-engineering.md) queue primitive is a stow package that links a single script into `~/.local/bin` (already on PATH, XDG-correct for executables).
+
+```bash
+make install-aeq      # ~/.local/bin/aeq -> aeq-bin/.local/bin/aeq
+make uninstall-aeq
+```
 
 ## Add a new skill
 

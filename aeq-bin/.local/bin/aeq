@@ -1,0 +1,267 @@
+#!/usr/bin/env bash
+#
+# aeq — agentic-engineering queue. A dumb, lock-free, per-repo task backlog.
+#
+# The queue is just directories of markdown files, one file per item, stored
+# OUT of the repo (so it never leaks to teammates) but keyed to the repo (so it
+# is shared across all of that repo's git worktrees). Status is the folder an
+# item lives in; "grabbing" an item is an atomic `mv`. No index, no daemon, no
+# lock — the filesystem is the source of truth.
+#
+#   store:   ${XDG_DATA_HOME:-~/.local/share}/agentic-engineering/repos/<repo-id>/
+#            ├── queued/        not started
+#            ├── in-progress/   grabbed by a worker
+#            ├── blocked/       parked, needs something
+#            └── done/          finished
+#
+#   repo-id: derived from `git remote.origin.url` (worktree-invariant), falling
+#            back to the shared git-common-dir's parent basename for remote-less
+#            repos. Override with --repo <id> or $AEQ_REPO.
+#
+# Usage:
+#   aeq add [-m SPEC] "TITLE"     enqueue an item (SPEC from -m, stdin, or $EDITOR)
+#   aeq list [STATUS]             list items; STATUS=open(default)|queued|in-progress|blocked|done|all
+#   aeq grab [ID]                 claim oldest queued (or ID) -> in-progress; prints its path
+#   aeq block ID [-m REASON]      move an item -> blocked, appending REASON
+#   aeq done ID                   move an item -> done
+#   aeq show ID                   print an item
+#   aeq rm ID                     delete an item
+#   aeq path                      print this repo's store directory
+#   aeq repo                      print this repo's resolved repo-id
+#   aeq help                      this help
+#
+# Global: --repo <id> / $AEQ_REPO override the resolved repo-id.
+#         $AEQ_HOME overrides the store root.
+
+set -eu
+
+PROG=${0##*/}
+STATUSES="queued in-progress blocked done"
+
+die()  { printf '%s: %s\n' "$PROG" "$*" >&2; exit 1; }
+warn() { printf '%s: %s\n' "$PROG" "$*" >&2; }
+
+# --- repo identity (worktree-invariant) -------------------------------------
+
+slug_from_url() {
+	# https://github.com/ssuyi-tw/skills.git -> github.com-ssuyi-tw-skills
+	# git@github.com:ssuyi-tw/skills.git      -> github.com-ssuyi-tw-skills
+	local s=$1
+	s=${s%.git}          # strip trailing .git
+	s=${s#*://}          # strip scheme://
+	s=${s#*@}            # strip user@
+	s=${s//:/\/}         # scp-style host:path -> host/path
+	# collapse everything outside [A-Za-z0-9._-] to a single dash
+	s=$(printf '%s' "$s" | tr -c 'A-Za-z0-9._-' '-' | sed 's/-\{1,\}/-/g; s/^-//; s/-$//')
+	printf '%s' "$s"
+}
+
+resolve_repo_id() {
+	[ -n "${AEQ_REPO:-}" ] && { printf '%s' "$AEQ_REPO"; return; }
+	local url cdir
+	url=$(git config --get remote.origin.url 2>/dev/null || true)
+	if [ -n "$url" ]; then
+		slug_from_url "$url"; return
+	fi
+	# remote-less: use the parent of the SHARED common git dir (same for all worktrees)
+	cdir=$(git rev-parse --git-common-dir 2>/dev/null) \
+		|| die "not inside a git repo (pass --repo <id> or set \$AEQ_REPO)"
+	cdir=$(cd "$cdir" && pwd)          # normalize relative ".git" to absolute
+	printf '%s' "$(basename "$(dirname "$cdir")")"
+}
+
+# --- store layout -----------------------------------------------------------
+
+store_root() { printf '%s' "${AEQ_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}/agentic-engineering}"; }
+repo_dir()   { printf '%s/repos/%s' "$(store_root)" "$(resolve_repo_id)"; }
+
+ensure_store() {
+	local base=$1 s
+	for s in $STATUSES; do mkdir -p "$base/$s"; done
+}
+
+# --- helpers ----------------------------------------------------------------
+
+slugify() {
+	printf '%s' "$1" \
+		| tr '[:upper:]' '[:lower:]' \
+		| tr -c 'a-z0-9' '-' \
+		| sed 's/-\{1,\}/-/g; s/^-//; s/-$//' \
+		| cut -c1-50
+}
+
+now_id() { date +%Y%m%dT%H%M%S; }
+now_iso() { date +%Y-%m-%dT%H:%M:%S%z; }
+
+# find a single item file by id (full name, or unique substring) across statuses
+# echoes the matching path; dies on 0 or >1 matches. arg2 (optional) limits statuses.
+find_item() {
+	local base id want_statuses matches f had_nocase
+	base=$(repo_dir); id=$1; want_statuses=${2:-$STATUSES}
+	matches=""
+	shopt -q nocasematch && had_nocase=1 || had_nocase=0   # match ids case-insensitively
+	shopt -s nocasematch
+	for s in $want_statuses; do
+		[ -d "$base/$s" ] || continue
+		for f in "$base/$s"/*.md; do
+			[ -e "$f" ] || continue
+			case "${f##*/}" in *"$id"*) matches="$matches$f"$'\n';; esac
+		done
+	done
+	[ "$had_nocase" -eq 1 ] || shopt -u nocasematch
+	matches=$(printf '%s' "$matches" | sed '/^$/d')
+	local n; n=$(printf '%s' "$matches" | grep -c . || true)
+	[ "$n" -eq 0 ] && die "no item matching '$id'"
+	[ "$n" -gt 1 ] && die "'$id' is ambiguous ($n matches):"$'\n'"$matches"
+	printf '%s' "$matches"
+}
+
+# --- subcommands ------------------------------------------------------------
+
+cmd_add() {
+	local spec="" title=""
+	while [ $# -gt 0 ]; do
+		case $1 in
+			-m|--message) spec=$2; shift 2;;
+			-*) die "add: unknown flag $1";;
+			*) title=$1; shift;;
+		esac
+	done
+	[ -n "$title" ] || die "add: TITLE required"
+
+	if [ -z "$spec" ]; then
+		if [ ! -t 0 ]; then
+			spec=$(cat)                                   # piped stdin
+		elif [ -n "${EDITOR:-}" ]; then
+			local tmp; tmp=$(mktemp); ${EDITOR} "$tmp" || true
+			spec=$(cat "$tmp"); rm -f "$tmp"
+		fi
+	fi
+
+	local base id slug file rid n
+	base=$(repo_dir); ensure_store "$base"
+	rid=$(resolve_repo_id)
+	id=$(now_id); slug=$(slugify "$title")
+	file="$base/queued/$id-$slug.md"
+	n=2; while [ -e "$file" ]; do file="$base/queued/$id-$slug-$n.md"; n=$((n+1)); done
+
+	{
+		printf -- '---\n'
+		printf 'title: %s\n' "$title"
+		printf 'repo: %s\n' "$rid"
+		printf 'created: %s\n' "$(now_iso)"
+		printf -- '---\n\n'
+		[ -n "$spec" ] && printf '%s\n' "$spec"
+	} > "$file"
+
+	printf 'queued %s\n' "${file##*/}"
+}
+
+cmd_list() {
+	local base status=${1:-open} s f title n
+	base=$(repo_dir)
+	[ -d "$base" ] || { printf '(empty — no items for %s)\n' "$(resolve_repo_id)"; return; }
+	case $status in
+		open) status="queued in-progress blocked";;
+		all)  status="$STATUSES";;
+		queued|in-progress|blocked|done) ;;
+		*) die "list: unknown status '$status'";;
+	esac
+	for s in $status; do
+		[ -d "$base/$s" ] || continue
+		n=0
+		for f in "$base/$s"/*.md; do [ -e "$f" ] && n=$((n+1)); done
+		printf '\n%s (%d)\n' "$s" "$n"
+		[ "$n" -eq 0 ] && continue
+		for f in "$base/$s"/*.md; do
+			[ -e "$f" ] || continue
+			title=$(sed -n 's/^title: //p' "$f" | head -1)
+			printf '  %-32s %s\n' "${f##*/}" "${title:-}"
+		done
+	done
+}
+
+cmd_grab() {
+	local base=; base=$(repo_dir); ensure_store "$base"
+	local f dest
+	if [ $# -ge 1 ]; then
+		f=$(find_item "$1" "queued")
+		dest="$base/in-progress/${f##*/}"
+		mv "$f" "$dest" || die "grab: failed to claim '$1'"
+		printf '%s\n' "$dest"
+		return
+	fi
+	# claim oldest queued; loop so two workers racing don't double-grab (loser's mv fails)
+	for f in "$base/queued"/*.md; do
+		[ -e "$f" ] || continue
+		dest="$base/in-progress/${f##*/}"
+		if mv "$f" "$dest" 2>/dev/null; then printf '%s\n' "$dest"; return; fi
+	done
+	die "grab: queue is empty"
+}
+
+cmd_block() {
+	local reason="" id=""
+	while [ $# -gt 0 ]; do
+		case $1 in
+			-m|--message) reason=$2; shift 2;;
+			-*) die "block: unknown flag $1";;
+			*) id=$1; shift;;
+		esac
+	done
+	[ -n "$id" ] || die "block: ID required"
+	local base f dest; base=$(repo_dir)
+	f=$(find_item "$id" "queued in-progress")
+	dest="$base/blocked/${f##*/}"
+	[ -n "$reason" ] && printf '\n> blocked %s: %s\n' "$(now_iso)" "$reason" >> "$f"
+	mv "$f" "$dest"
+	printf 'blocked %s\n' "${dest##*/}"
+}
+
+cmd_done() {
+	[ $# -ge 1 ] || die "done: ID required"
+	local base f dest; base=$(repo_dir)
+	f=$(find_item "$1" "queued in-progress blocked")
+	dest="$base/done/${f##*/}"
+	mv "$f" "$dest"
+	printf 'done %s\n' "${dest##*/}"
+}
+
+cmd_show() { local f; f=$(find_item "$1"); cat "$f"; }
+
+cmd_rm() {
+	[ $# -ge 1 ] || die "rm: ID required"
+	local f; f=$(find_item "$1")
+	rm -- "$f"
+	printf 'removed %s\n' "${f##*/}"
+}
+
+cmd_help() { sed -n '3,/^# Global/p' "$0" | sed 's/^# \{0,1\}//; s/^#$//'; }
+
+# --- dispatch ---------------------------------------------------------------
+
+# pull a leading/anywhere --repo out of the args before dispatch
+args=()
+while [ $# -gt 0 ]; do
+	case $1 in
+		--repo) AEQ_REPO=$2; export AEQ_REPO; shift 2;;
+		--repo=*) AEQ_REPO=${1#*=}; export AEQ_REPO; shift;;
+		*) args+=("$1"); shift;;
+	esac
+done
+set -- "${args[@]:-}"
+
+cmd=${1:-help}; [ $# -gt 0 ] && shift
+case $cmd in
+	add)         cmd_add "$@";;
+	list|ls)     cmd_list "$@";;
+	grab|next)   cmd_grab "$@";;
+	block)       cmd_block "$@";;
+	done|finish) cmd_done "$@";;
+	show|cat)    cmd_show "$@";;
+	rm|remove)   cmd_rm "$@";;
+	path)        repo_dir; echo;;
+	repo)        resolve_repo_id; echo;;
+	help|-h|--help) cmd_help;;
+	*) die "unknown command '$cmd' (try: $PROG help)";;
+esac

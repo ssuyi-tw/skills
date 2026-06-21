@@ -15,13 +15,15 @@ GUARDRAIL_PACKAGE := git-guardrails
 GUARDRAIL_DIR     := $(CLAUDE_HOME)/hooks
 SETTINGS_JSON     := $(CLAUDE_HOME)/settings.json
 GUARDRAIL_CMD     := ~/.claude/hooks/block-dangerous-git.sh
+AEQ_PACKAGE := aeq-bin
+LOCAL_BIN   := $(HOME)/.local/bin
 
 STOW_SKILL := stow -d $(STOW_DIR) -t $(SKILLS_TARGET)
 STOW_HOME  := stow -d $(STOW_DIR) -t $(HOME_TARGET)
 
 .DEFAULT_GOAL := install
 
-.PHONY: help install uninstall stow unstow restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-git-guardrails uninstall-git-guardrails list doctor bootstrap
+.PHONY: help install uninstall stow unstow restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq list doctor bootstrap
 
 help:
 	@echo "Targets:"
@@ -31,6 +33,8 @@ help:
 	@echo "  uninstall-karpathy-guidelines  remove CLAUDE.md import + unstow guidelines"
 	@echo "  install-git-guardrails         stow PreToolUse hook + register in settings.json"
 	@echo "  uninstall-git-guardrails       unregister hook + unstow it"
+	@echo "  install-aeq          stow the aeq queue CLI into ~/.local/bin"
+	@echo "  uninstall-aeq        unstow the aeq queue CLI"
 	@echo "  stow SKILL=<name>    stow one skill"
 	@echo "  unstow SKILL=<name>  unstow one skill"
 	@echo "  restow               re-stow every skill (refresh after edits)"
@@ -127,6 +131,18 @@ uninstall-git-guardrails:
 		jq --arg cmd '$(GUARDRAIL_CMD)' 'if .hooks.PreToolUse then .hooks.PreToolUse |= map(select([.hooks[]?.command] | index($$cmd) | not)) else . end' $(SETTINGS_JSON) > "$$tmp" && mv "$$tmp" $(SETTINGS_JSON) && echo "unregistered guardrail hook from $(SETTINGS_JSON)"; \
 	fi
 	$(STOW_HOME) -D $(GUARDRAIL_PACKAGE)
+
+install-aeq:
+	@mkdir -p $(LOCAL_BIN)
+	$(STOW_HOME) $(AEQ_PACKAGE)
+	@if echo "$$PATH" | tr ':' '\n' | grep -qx '$(LOCAL_BIN)'; then \
+		echo "linked $(LOCAL_BIN)/aeq (on PATH — try: aeq help)"; \
+	else \
+		echo "linked $(LOCAL_BIN)/aeq — NOTE: $(LOCAL_BIN) is not on your PATH"; \
+	fi
+
+uninstall-aeq:
+	$(STOW_HOME) -D $(AEQ_PACKAGE)
 
 list:
 	@echo "skills:"
