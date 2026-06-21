@@ -57,12 +57,16 @@ Full surface and the per-verb judgment live in the [`aeq` skill](../aeq/aeq/SKIL
 
 A `SessionStart` hook surfaces the repo's open queue into an interactive session as read-only context — the *awareness* half of **awareness ≠ execution**. An interactive session sees what's queued so the backlog is in context, but it never grabs or runs items; that's a drain worker's job. The hook resolves the repo from the session's cwd (the same worktree-invariant id as the CLI) and stays silent when there's nothing to show.
 
+## Draining (commit-on-green)
+
+The *execution* half of **awareness ≠ execution**, via `aeq-drain-supacode [N]`: it grabs up to N items and dispatches each into its own git worktree (branch `aeq/<id>`, bound at grab) and an **interactive** Claude tab in Supacode, seeded with the task and told to run the gate, commit on green, and `aeq done` / `block`. You watch and steer each session — supervised, not headless. Fanning out is safe because the grab is atomic / lock-free, and each item is isolated on its own branch → its own PR. The gate (`$AEQ_GATE`, e.g. tests + type-check) is load-bearing: a session with nothing to push back agrees with itself.
+
 ## Install
 
-The CLI installs as a stow package into `~/.local/bin` (on PATH, XDG-correct for executables):
+The CLI and the drain tools install as one stow package into `~/.local/bin` (on PATH, XDG-correct for executables):
 
 ```bash
-make install-aeq      # stow aeq-bin/.local/bin/aeq -> ~/.local/bin/aeq
+make install-aeq      # stow aeq-bin/.local/bin/{aeq,aeq-drain-supacode} -> ~/.local/bin/
 make uninstall-aeq
 ```
 

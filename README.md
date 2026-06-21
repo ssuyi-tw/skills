@@ -107,10 +107,10 @@ This unregisters the hook from `settings.json` and unstows the script.
 
 ## Install the aeq queue CLI
 
-The [`aeq`](docs/agentic-engineering.md) queue primitive is a stow package that links a single script into `~/.local/bin` (already on PATH, XDG-correct for executables).
+The [`aeq`](docs/agentic-engineering.md) queue primitive and its supervised drain dispatcher (`aeq-drain-supacode`) are one stow package linked into `~/.local/bin` (already on PATH, XDG-correct for executables).
 
 ```bash
-make install-aeq      # ~/.local/bin/aeq -> aeq-bin/.local/bin/aeq
+make install-aeq      # ~/.local/bin/{aeq,aeq-drain-supacode}
 make uninstall-aeq
 ```
 

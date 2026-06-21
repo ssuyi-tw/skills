@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# aeq-drain-supacode — dispatch queued items into SUPERVISED Supacode sessions.
+#
+# For each grabbed item: a dedicated git worktree (branch aeq/<id>, bound at grab)
+# plus an INTERACTIVE Claude tab seeded with the task. You watch and steer it in
+# Supacode — it is NOT headless. The session implements, runs the gate, and on green
+# commits + `aeq done`s (or `aeq block`s). Fan out N at once safely: the grab is
+# atomic / lock-free.
+#
+#   aeq-drain-supacode [N]     dispatch up to N items into supervised tabs (default 1)
+#   AEQ_GATE="npm test"        the gate the session is told to pass before committing
+#   DRY_RUN=1 ...              print what would happen, touch nothing
+set -uo pipefail
+
+N=${1:-1}
+GATE=${AEQ_GATE:-the test suite, type-check, and build}
+
+for ((i=0; i<N; i++)); do
+  path=$(aeq grab 2>/dev/null) || { echo "queue empty"; break; }
+  id=$(basename "$path" .md)
+  instr="Work the queued task described in the file $path (read it first). The operator is supervising in Supacode and may steer you. When your change passes the gate ($GATE), commit it and then run: aeq done $id. If you get stuck or need something external, run: aeq block $id -m followed by a short reason."
+
+  if [ -n "${DRY_RUN:-}" ]; then
+    printf '+ supacode repo worktree-new --branch aeq/%s --name %s\n' "$id" "$id"
+    printf '+ supacode tab new -w <resolved-worktree> -i claude "<task for %s>"\n' "$id"
+    echo "dispatched $id (dry-run)"
+    continue
+  fi
+
+  # worktree-new prints no id on stdout, and with --fetch it can stall — so create it
+  # WITHOUT --fetch, then RESOLVE the worktree by name from the list. NEVER pass an empty
+  # -w to `tab new`: that silently targets the CURRENT session's worktree, so the agent
+  # would run here instead of in the item's worktree. (Worktree bases on local refs;
+  # pull first if you need it fresh from the remote.)
+  supacode repo worktree-new --branch "aeq/$id" --name "$id" >/dev/null 2>&1 || true
+  WT=$(supacode worktree list 2>/dev/null | grep -F "$id" | head -1)
+  if [ -z "$WT" ]; then
+    echo "!! $id: could not resolve its worktree (is Supacode running?) — left in-progress"
+    continue
+  fi
+  supacode tab new -w "$WT" -i "claude \"$instr\"" >/dev/null 2>&1 || true
+  echo "dispatched $id -> worktree $WT  (open & supervise it in Supacode)"
+done
