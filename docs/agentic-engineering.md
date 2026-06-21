@@ -53,6 +53,10 @@ aeq rm ID                   aeq path            aeq repo
 
 Full surface and the per-verb judgment live in the [`aeq` skill](../aeq/aeq/SKILL.md).
 
+## Awareness hook
+
+A `SessionStart` hook surfaces the repo's open queue into an interactive session as read-only context — the *awareness* half of **awareness ≠ execution**. An interactive session sees what's queued so the backlog is in context, but it never grabs or runs items; that's a drain worker's job. The hook resolves the repo from the session's cwd (the same worktree-invariant id as the CLI) and stays silent when there's nothing to show.
+
 ## Install
 
 The CLI installs as a stow package into `~/.local/bin` (on PATH, XDG-correct for executables):

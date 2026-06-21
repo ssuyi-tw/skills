@@ -17,13 +17,15 @@ SETTINGS_JSON     := $(CLAUDE_HOME)/settings.json
 GUARDRAIL_CMD     := ~/.claude/hooks/block-dangerous-git.sh
 AEQ_PACKAGE := aeq-bin
 LOCAL_BIN   := $(HOME)/.local/bin
+AWARENESS_PACKAGE := aeq-awareness
+AWARENESS_CMD     := ~/.claude/hooks/aeq-session-awareness.sh
 
 STOW_SKILL := stow -d $(STOW_DIR) -t $(SKILLS_TARGET)
 STOW_HOME  := stow -d $(STOW_DIR) -t $(HOME_TARGET)
 
 .DEFAULT_GOAL := install
 
-.PHONY: help install uninstall stow unstow restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq list doctor bootstrap
+.PHONY: help install uninstall stow unstow restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap
 
 help:
 	@echo "Targets:"
@@ -35,6 +37,8 @@ help:
 	@echo "  uninstall-git-guardrails       unregister hook + unstow it"
 	@echo "  install-aeq          stow the aeq queue CLI into ~/.local/bin"
 	@echo "  uninstall-aeq        unstow the aeq queue CLI"
+	@echo "  install-aeq-awareness          stow SessionStart hook + register in settings.json"
+	@echo "  uninstall-aeq-awareness        unregister hook + unstow it"
 	@echo "  stow SKILL=<name>    stow one skill"
 	@echo "  unstow SKILL=<name>  unstow one skill"
 	@echo "  restow               re-stow every skill (refresh after edits)"
@@ -143,6 +147,24 @@ install-aeq:
 
 uninstall-aeq:
 	$(STOW_HOME) -D $(AEQ_PACKAGE)
+
+# stow the SessionStart hook into ~/.claude/hooks, then register it in
+# ~/.claude/settings.json (idempotent; preserves other keys). awareness != execution:
+# the hook only surfaces the repo's open queue read-only, it never grabs/runs.
+install-aeq-awareness:
+	@command -v jq >/dev/null 2>&1 || { echo "error: jq is required (brew install jq)"; exit 1; }
+	@mkdir -p $(CLAUDE_HOME)/hooks
+	$(STOW_HOME) $(AWARENESS_PACKAGE)
+	@touch $(SETTINGS_JSON)
+	@if [ ! -s $(SETTINGS_JSON) ]; then echo '{}' > $(SETTINGS_JSON); fi
+	@tmp="$$(mktemp)" && jq --arg cmd '$(AWARENESS_CMD)' '.hooks //= {} | .hooks.SessionStart //= [] | if ([.hooks.SessionStart[]?.hooks[]?.command] | index($$cmd)) then . else .hooks.SessionStart += [{matcher:"*",hooks:[{type:"command",command:$$cmd}]}] end' $(SETTINGS_JSON) > "$$tmp" && mv "$$tmp" $(SETTINGS_JSON) && echo "registered aeq awareness hook in $(SETTINGS_JSON)"
+
+uninstall-aeq-awareness:
+	@if [ -f $(SETTINGS_JSON) ]; then \
+		tmp="$$(mktemp)"; \
+		jq --arg cmd '$(AWARENESS_CMD)' 'if .hooks.SessionStart then .hooks.SessionStart |= map(select([.hooks[]?.command] | index($$cmd) | not)) else . end' $(SETTINGS_JSON) > "$$tmp" && mv "$$tmp" $(SETTINGS_JSON) && echo "unregistered aeq awareness hook from $(SETTINGS_JSON)"; \
+	fi
+	$(STOW_HOME) -D $(AWARENESS_PACKAGE)
 
 list:
 	@echo "skills:"

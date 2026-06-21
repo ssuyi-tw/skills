@@ -111,6 +111,17 @@ make install-aeq      # ~/.local/bin/aeq -> aeq-bin/.local/bin/aeq
 make uninstall-aeq
 ```
 
+## Install aeq awareness (SessionStart hook)
+
+A `SessionStart` hook that injects this repo's open `aeq` queue into an interactive session as **read-only awareness** — *awareness ≠ execution*: the session sees what's queued for context, but only a drain worker grabs and runs items. It no-ops silently outside a git repo, on an empty queue, or when `aeq`/`jq` aren't installed. Requires `jq`.
+
+```bash
+make install-aeq-awareness
+make uninstall-aeq-awareness
+```
+
+`make install-aeq-awareness` stows the hook to `~/.claude/hooks/aeq-session-awareness.sh` and idempotently registers it under `SessionStart` in `~/.claude/settings.json`, merging into existing hooks without touching other settings.
+
 ## Add a new skill
 
 ```bash
