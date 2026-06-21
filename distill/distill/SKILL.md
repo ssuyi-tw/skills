@@ -7,21 +7,18 @@ disable-model-invocation: true
 
 # distill
 
-Backward-looking cousin of handoff: handoff carries the work's *mechanics* forward; distill captures the *concepts and reasoning* — decisions-and-why, models that clicked, lessons — into a file the user triages, then chains the durable pieces onward. Fires on explicit request near a session's end.
+Backward-looking cousin of handoff: handoff carries the work's *mechanics* forward; distill keeps the **signal** — reasoning that compounds — and drops the **noise** of how the work got done. It writes that signal into a file the user triages, then chains the durable pieces onward. Fires on explicit request near a session's end.
 
 **Length follows density.** Skim the user's turns: exploring or weighing advice mints signal, directing execution mints little. One real insight → one entry, not a filled-in template. If nothing emerged, say so and stop. If the user named a thread, focus there.
 
 Method:
-1. Read as a dialogue; find where judgment was exchanged (a call + its *why*, a reversal, advice weighed).
-2. Drop anything that only says *how* the work was done (code, commands, edits). Keep the reasoning.
-3. Keep a line only if it would still mean something with the code deleted.
 
-Write `DISTILL.md` to the OS temp dir (not the workspace); tell the user the path. Use only the headings the material earns:
+1. Read as a dialogue and find the signal — where judgment was exchanged (a call and its *why*, a reversal, advice weighed), a model that clicked, a seed worth keeping (a new thing that could exist), or an open question whose answer would shift understanding (task-shaped questions are handoff's).
+2. Keep a line only if it survives the code deleted — if it means nothing without the diff beside it, it's noise; drop it.
+3. Where a kept item is clearly signal but unclear — a decision missing its *why*, a reversal whose lesson went unsaid, an item you can't place as durable or one-off — that gap is *missing* signal, not noise: no filtering creates it, only the user can. Offer to fill the highest-value gaps (≤3 questions, skippable); fold the answers in. Leave any gap left unfilled flagged — never guess, which injects fake signal.
 
-- **Decisions** (chosen, why, rejected) · **Concepts** (a framing that clicked) · **Lessons** (do differently next time) · **Seeds** (a new thing that could exist) · **Parking lot** (an open question that would change your understanding — *not* a next-step; a question whose answer is a task goes to handoff).
+Write `DISTILL.md` to the OS temp dir (not the workspace); tell the user the path. Shape is free: one heading per kind of signal you kept, nothing padded, one insight one home.
 
-One insight, one home — if it fits two, keep the more durable. Mark portable lessons/models with `→ foundation`, but only when the mark traces to a real turn (the user correcting the assistant, a measurement overturning a stated position, the user dictating a rule); otherwise leave it unmarked. A durable user preference gets `→ memory:feedback`.
+Mark portable lessons/models with `→ foundation`, but only when the mark traces to a real turn (the user correcting the assistant, a measurement overturning a stated position, the user dictating a rule); otherwise leave it unmarked. A durable user preference gets `→ memory:feedback`.
 
 Chain: if anything was marked, offer to hand the marked subset to a persistence skill (memory by default) and run it on the user's OK. Distill recommends; it does not persist itself.
-
-Don't: pad a thin session, capture mechanics, restate one idea twice, or park next-steps (those are handoff's).
