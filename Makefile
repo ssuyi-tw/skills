@@ -11,13 +11,17 @@ HOME_FILES    := $(filter-out %/.claude/CLAUDE.md,$(wildcard */.claude/*.md))
 HOME_PACKAGES := $(sort $(foreach f,$(HOME_FILES),$(firstword $(subst /, ,$(f)))))
 KARPATHY_PACKAGE := karpathy-guidelines
 KARPATHY_INCLUDE := @karpathy-guidelines.md
+GUARDRAIL_PACKAGE := git-guardrails
+GUARDRAIL_DIR     := $(CLAUDE_HOME)/hooks
+SETTINGS_JSON     := $(CLAUDE_HOME)/settings.json
+GUARDRAIL_CMD     := ~/.claude/hooks/block-dangerous-git.sh
 
 STOW_SKILL := stow -d $(STOW_DIR) -t $(SKILLS_TARGET)
 STOW_HOME  := stow -d $(STOW_DIR) -t $(HOME_TARGET)
 
 .DEFAULT_GOAL := install
 
-.PHONY: help install uninstall stow unstow restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines list doctor bootstrap
+.PHONY: help install uninstall stow unstow restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-git-guardrails uninstall-git-guardrails list doctor bootstrap
 
 help:
 	@echo "Targets:"
@@ -25,6 +29,8 @@ help:
 	@echo "  uninstall            unstow skills (leaves dirs/symlinks alone)"
 	@echo "  install-karpathy-guidelines    stow guidelines + add CLAUDE.md import"
 	@echo "  uninstall-karpathy-guidelines  remove CLAUDE.md import + unstow guidelines"
+	@echo "  install-git-guardrails         stow PreToolUse hook + register in settings.json"
+	@echo "  uninstall-git-guardrails       unregister hook + unstow it"
 	@echo "  stow SKILL=<name>    stow one skill"
 	@echo "  unstow SKILL=<name>  unstow one skill"
 	@echo "  restow               re-stow every skill (refresh after edits)"
@@ -104,6 +110,23 @@ uninstall-karpathy-guidelines:
 		mv "$$tmp" $(CLAUDE_MD); \
 	fi
 	$(STOW_HOME) -D $(KARPATHY_PACKAGE)
+
+# stow the hook script into ~/.claude/hooks, then register it as a Bash
+# PreToolUse hook in ~/.claude/settings.json (idempotent; preserves other keys).
+install-git-guardrails:
+	@command -v jq >/dev/null 2>&1 || { echo "error: jq is required (brew install jq)"; exit 1; }
+	@mkdir -p $(GUARDRAIL_DIR)
+	$(STOW_HOME) $(GUARDRAIL_PACKAGE)
+	@touch $(SETTINGS_JSON)
+	@if [ ! -s $(SETTINGS_JSON) ]; then echo '{}' > $(SETTINGS_JSON); fi
+	@tmp="$$(mktemp)" && jq --arg cmd '$(GUARDRAIL_CMD)' '.hooks //= {} | .hooks.PreToolUse //= [] | if ([.hooks.PreToolUse[]?.hooks[]?.command] | index($$cmd)) then . else .hooks.PreToolUse += [{matcher:"Bash",hooks:[{type:"command",command:$$cmd}]}] end' $(SETTINGS_JSON) > "$$tmp" && mv "$$tmp" $(SETTINGS_JSON) && echo "registered guardrail hook in $(SETTINGS_JSON)"
+
+uninstall-git-guardrails:
+	@if [ -f $(SETTINGS_JSON) ]; then \
+		tmp="$$(mktemp)"; \
+		jq --arg cmd '$(GUARDRAIL_CMD)' 'if .hooks.PreToolUse then .hooks.PreToolUse |= map(select([.hooks[]?.command] | index($$cmd) | not)) else . end' $(SETTINGS_JSON) > "$$tmp" && mv "$$tmp" $(SETTINGS_JSON) && echo "unregistered guardrail hook from $(SETTINGS_JSON)"; \
+	fi
+	$(STOW_HOME) -D $(GUARDRAIL_PACKAGE)
 
 list:
 	@echo "skills:"

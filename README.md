@@ -24,6 +24,8 @@ Home-level `CLAUDE.md` is adapted from [`multica-ai/andrej-karpathy-skills`](htt
 
 `writing-great-skills` is from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/writing-great-skills) by Matt Pocock.
 
+`git-guardrails` uses the `block-dangerous-git.sh` hook from [`mattpocock/skills`](https://github.com/mattpocock/skills/tree/main/skills/misc/git-guardrails-claude-code) by Matt Pocock (script only; install rewired for this repo's stow flow).
+
 ## Layout
 
 Each skill lives in a "doubled" directory — the outer dir is the stow package, the inner dir is the skill itself:
@@ -33,6 +35,10 @@ skills/
 ├── karpathy-guidelines/        <- stow package for home-level Claude guidance
 │   └── .claude/
 │       └── karpathy-guidelines.md
+├── git-guardrails/             <- stow package for a Claude Code hook
+│   └── .claude/
+│       └── hooks/
+│           └── block-dangerous-git.sh
 ├── LICENSE
 ├── Makefile
 ├── README.md
@@ -66,6 +72,34 @@ This keeps your existing `~/.claude/CLAUDE.md` as the aggregator. It stows only 
 ```bash
 make install-karpathy-guidelines
 ```
+
+## Install git guardrails (PreToolUse hook)
+
+A `PreToolUse` hook (`block-dangerous-git.sh`) that blocks destructive git commands
+(`push`, `reset --hard`, `clean -f`, `branch -D`, `checkout .` / `restore .`) before
+Claude Code runs them. It is not a skill — the script is stow-managed into
+`~/.claude/hooks/`, and registration lives in `~/.claude/settings.json`.
+
+Requires `jq` (used at install time and by the hook at runtime).
+
+```bash
+make install-git-guardrails
+```
+
+`make install-git-guardrails` will:
+
+1. Stow the script to `~/.claude/hooks/block-dangerous-git.sh` (a symlink into this repo).
+2. Idempotently add a `Bash` `PreToolUse` entry to `~/.claude/settings.json`, merging into
+   any existing `hooks` without touching other settings.
+
+Editing the blocked patterns is a one-line change to the script in this repo — reflected
+live through the symlink, no restow needed. To remove:
+
+```bash
+make uninstall-git-guardrails
+```
+
+This unregisters the hook from `settings.json` and unstows the script.
 
 ## Add a new skill
 
