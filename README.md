@@ -12,6 +12,7 @@ Installed via `stow` rather than an npm wrapper. Also includes optional home-lev
 | [`distill`](distill/distill/SKILL.md) | Distills a session into a one-off `DISTILL.md` of durable concepts and reasoning — decisions, models, lessons. Manual (`/distill`). See [docs/distill.md](docs/distill.md). |
 | [`greeting`](greeting/greeting/SKILL.md) | Casual greeting register when you open with "hi" / "hey" / etc. |
 | [`handoff`](handoff/handoff/SKILL.md) | Compacts the conversation into a handoff doc so a fresh agent can continue. Manual (`/handoff`). |
+| [`writing-great-skills`](writing-great-skills/writing-great-skills/SKILL.md) | Reference for the vocabulary and principles that make a skill predictable. |
 
 ## Credits
 
@@ -20,6 +21,8 @@ Home-level `CLAUDE.md` is adapted from [`multica-ai/andrej-karpathy-skills`](htt
 `blunt-mode` is a terser, blunter cousin of [`caveman`](https://github.com/JuliusBrussee/caveman) by Julius Brussee.
 
 `handoff` mirrors [mattpocock/skills](https://github.com/mattpocock/skills/blob/main/skills/productivity/handoff/SKILL.md) by Matt Pocock.
+
+`writing-great-skills` is from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/writing-great-skills) by Matt Pocock.
 
 ## Layout
 
