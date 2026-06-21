@@ -15,7 +15,7 @@ Method:
 
 1. Read as a dialogue and find the signal — where judgment was exchanged (a call and its *why*, a reversal, advice weighed), a model that clicked, a seed worth keeping (a new thing that could exist), or an open question whose answer would shift understanding (task-shaped questions are handoff's).
 2. Keep a line only if it survives the code deleted — if it means nothing without the diff beside it, it's noise; drop it.
-3. Where a kept item is clearly signal but unclear — a decision missing its *why*, a reversal whose lesson went unsaid, an item you can't place as durable or one-off — that gap is *missing* signal, not noise: no filtering creates it, only the user can. Offer to fill the highest-value gaps (≤3 questions, skippable); fold the answers in. Leave any gap left unfilled flagged — never guess, which injects fake signal.
+3. Before writing, scan the kept signal for *gaps* — a decision missing its *why*, a reversal whose lesson went unsaid, an item you can't place as durable or one-off. A gap is *missing* signal, not noise; only the user can supply it. Offer to fill the highest-value ones (≤3 questions, skippable), fold in the answers, and flag any left unfilled. Never guess — a guess injects fake signal.
 
 Write `DISTILL.md` to the OS temp dir (not the workspace); tell the user the path. Shape is free: one heading per kind of signal you kept, nothing padded, one insight one home.
 
