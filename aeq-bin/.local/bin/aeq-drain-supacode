@@ -33,9 +33,16 @@ for ((i=0; i<N; i++)); do
   # would run here instead of in the item's worktree. (Worktree bases on local refs;
   # pull first if you need it fresh from the remote.)
   supacode repo worktree-new --branch "aeq/$id" --name "$id" >/dev/null 2>&1 || true
-  WT=$(supacode worktree list 2>/dev/null | grep -F "$id" | head -1)
+  # worktree-new is ASYNC: the new worktree may not appear in `worktree list` for a beat.
+  # Poll briefly before giving up — otherwise we skip `tab new` and orphan the worktree.
+  WT=""
+  for _ in $(seq 1 20); do
+    WT=$(supacode worktree list 2>/dev/null | grep -F "$id" | head -1)
+    [ -n "$WT" ] && break
+    sleep 0.5
+  done
   if [ -z "$WT" ]; then
-    echo "!! $id: could not resolve its worktree (is Supacode running?) — left in-progress"
+    echo "!! $id: could not resolve its worktree after ~10s (is Supacode running?) — left in-progress"
     continue
   fi
   supacode tab new -w "$WT" -i "claude \"$instr\"" >/dev/null 2>&1 || true
