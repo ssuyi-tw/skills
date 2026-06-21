@@ -11,3 +11,6 @@
 # documentation (core.ignorecase=true makes an unanchored DISTILL.md match it).
 /DISTILL.md
 /a.md
+
+# PRDs are private intent — local only, never committed
+PRDs/
