@@ -8,13 +8,13 @@ Installed via `stow` rather than an npm wrapper. Also includes optional home-lev
 
 | Skill | What it does |
 | --- | --- |
-| [`aeq`](aeq/aeq/SKILL.md) | Drives the private, per-repo agentic-engineering task queue (`aeq` CLI). See [docs/agentic-engineering.md](docs/agentic-engineering.md). |
-| [`blunt-mode`](blunt-mode/blunt-mode/SKILL.md) | Terse dev-chat register — strips filler and hedging, keeps every concrete fact. |
-| [`distill`](distill/distill/SKILL.md) | Distills a session into a one-off `DISTILL.md` of durable concepts and reasoning — decisions, models, lessons. Manual (`/distill`). See [docs/distill.md](docs/distill.md). |
-| [`greeting`](greeting/greeting/SKILL.md) | Casual greeting register when you open with "hi" / "hey" / etc. |
-| [`grilling`](grilling/grilling/SKILL.md) | Interviews you relentlessly to stress-test a plan or design before building. |
-| [`handoff`](handoff/handoff/SKILL.md) | Compacts the conversation into a handoff doc so a fresh agent can continue. Manual (`/handoff`). |
-| [`writing-great-skills`](writing-great-skills/writing-great-skills/SKILL.md) | Reference for the vocabulary and principles that make a skill predictable. |
+| [`aeq`](skills/aeq/SKILL.md) | Drives the private, per-repo agentic-engineering task queue (`aeq` CLI). See [docs/agentic-engineering.md](docs/agentic-engineering.md). |
+| [`blunt-mode`](skills/blunt-mode/SKILL.md) | Terse dev-chat register — strips filler and hedging, keeps every concrete fact. |
+| [`distill`](skills/distill/SKILL.md) | Distills a session into a one-off `DISTILL.md` of durable concepts and reasoning — decisions, models, lessons. Manual (`/distill`). See [docs/distill.md](docs/distill.md). |
+| [`greeting`](skills/greeting/SKILL.md) | Casual greeting register when you open with "hi" / "hey" / etc. |
+| [`grilling`](skills/grilling/SKILL.md) | Interviews you relentlessly to stress-test a plan or design before building. |
+| [`handoff`](skills/handoff/SKILL.md) | Compacts the conversation into a handoff doc so a fresh agent can continue. Manual (`/handoff`). |
+| [`writing-great-skills`](skills/writing-great-skills/SKILL.md) | Reference for the vocabulary and principles that make a skill predictable. |
 
 ## Credits
 
@@ -32,10 +32,18 @@ Home-level `CLAUDE.md` is adapted from [`multica-ai/andrej-karpathy-skills`](htt
 
 ## Layout
 
-Each skill lives in a "doubled" directory — the outer dir is the stow package, the inner dir is the skill itself:
+Skills live under a single `skills/` directory in the standard `skills/<name>/SKILL.md`
+layout — the same shape used by Claude Code plugin marketplaces and `skills.sh`, so this
+repo is shareable/installable the common way too (see [Sharing](#sharing)). Home-level
+guidance, hooks, and bins each remain their own stow package at the repo root.
 
 ```text
-skills/
+.
+├── skills/                     <- one stow package; each child folds into ~/.claude/skills/
+│   ├── blunt-mode/
+│   │   └── SKILL.md            <- this dir name appears in ~/.claude/skills/
+│   └── <next-skill>/
+│       └── SKILL.md
 ├── karpathy-guidelines/        <- stow package for home-level Claude guidance
 │   └── .claude/
 │       └── karpathy-guidelines.md
@@ -45,16 +53,12 @@ skills/
 │           └── block-dangerous-git.sh
 ├── LICENSE
 ├── Makefile
-├── README.md
-├── blunt-mode/                 <- stow package
-│   └── blunt-mode/             <- the actual skill (this name appears in ~/.claude/skills/)
-│       └── SKILL.md
-└── <next-skill>/
-    └── <next-skill>/
-        └── SKILL.md
+└── README.md
 ```
 
-The doubling is required so `stow` can link each skill as a directory rather than flattening its contents into the target.
+`stow` links `skills/` as one package: its tree-folding turns each child skill dir into a
+single directory symlink under `~/.claude/skills/`. Because the package strips its own name,
+no per-skill "doubling" is needed — the skill dir itself is the unit that gets linked.
 
 ## Install
 
@@ -67,7 +71,7 @@ make install
 
 1. Create `~/.claude/skills/` (Claude Code's real skill dir).
 2. Create `~/.agent/skills` as a symlink to `~/.claude/skills/`.
-3. Stow every skill in this repo into `~/.agent/skills/`, which transparently lands in `~/.claude/skills/`.
+3. Stow the `skills` package into `~/.agent/skills/` — each skill dir folds to a symlink under `~/.claude/skills/`.
 
 ## Install Karpathy guidelines
 
@@ -128,20 +132,27 @@ make uninstall-aeq-awareness
 ## Add a new skill
 
 ```bash
-mkdir -p my-skill/my-skill
-$EDITOR my-skill/my-skill/SKILL.md
-make stow SKILL=my-skill
+mkdir -p skills/my-skill
+$EDITOR skills/my-skill/SKILL.md
+make restow                 # fold the new skill dir into ~/.claude/skills/
 ```
 
 ## Remove a skill
 
+`restow` won't remove a skill whose dir is already gone (stow no longer sees it), so drop
+the links first, then delete:
+
 ```bash
-make unstow SKILL=my-skill
+make uninstall              # drop all skill symlinks (dirs/sources untouched)
+git rm -r skills/my-skill
+make install                # re-fold what remains
 ```
 
-## Refresh after editing files inside a skill
+## Refresh after adding or removing a skill
 
-Only needed when you add/remove files (existing file edits are reflected automatically through the symlink):
+Editing a skill's files — or adding/removing files *inside* an existing skill — is reflected
+live through the directory symlink. `make restow` is only needed when you add a new skill dir
+(or to repair links):
 
 ```bash
 make restow
@@ -162,12 +173,25 @@ make list      # which skills this repo defines
 make doctor    # resolved paths and current symlink state
 ```
 
+## Sharing
+
+The `skills/<name>/SKILL.md` layout is the common, tool-agnostic one, so others can install
+these without stow:
+
+- **skills.sh** — works as-is against the flat layout: `npx skills add <user>/<repo>`.
+- **Claude Code plugin marketplace** — add a `.claude-plugin/marketplace.json` pointing at
+  `skills/`, then consumers run `/plugin marketplace add <user>/<repo>` + `/plugin install`,
+  or `claude --plugin-dir <path>` locally.
+
+Those are copy-based installs for *other* machines. On your own machine you keep the live
+stow symlinks (this repo stays the single source of truth) — the two don't conflict.
+
 ## How it works
 
 ```text
-skills/<name>/<name>/         (source — this repo)
+skills/<name>/               (source — this repo; one stow package: `skills`)
        │
-       │  stow links into
+       │  stow folds each child dir into
        ▼
 ~/.agent/skills/<name>/       (agent-neutral abstraction)
        │

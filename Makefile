@@ -6,7 +6,8 @@ CLAUDE_SKILLS := $(HOME)/.claude/skills
 CLAUDE_HOME   := $(HOME)/.claude
 CLAUDE_MD     := $(CLAUDE_HOME)/CLAUDE.md
 HOME_TARGET   := $(HOME)
-SKILLS        := $(sort $(foreach f,$(wildcard */*/SKILL.md),$(firstword $(subst /, ,$(f)))))
+SKILLS_PACKAGE := skills
+SKILL_NAMES    := $(sort $(notdir $(patsubst %/SKILL.md,%,$(wildcard skills/*/SKILL.md))))
 HOME_FILES    := $(filter-out %/.claude/CLAUDE.md,$(wildcard */.claude/*.md))
 HOME_PACKAGES := $(sort $(foreach f,$(HOME_FILES),$(firstword $(subst /, ,$(f)))))
 KARPATHY_PACKAGE := karpathy-guidelines
@@ -27,7 +28,7 @@ STOW_HOME  := stow -d $(STOW_DIR) -t $(HOME_TARGET)
 
 .DEFAULT_GOAL := install
 
-.PHONY: help install uninstall stow unstow restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-commit-style uninstall-commit-style install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap
+.PHONY: help install uninstall restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-commit-style uninstall-commit-style install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap
 
 help:
 	@echo "Targets:"
@@ -43,9 +44,7 @@ help:
 	@echo "  uninstall-aeq        unstow the aeq queue CLI"
 	@echo "  install-aeq-awareness          stow SessionStart hook + register in settings.json"
 	@echo "  uninstall-aeq-awareness        unregister hook + unstow it"
-	@echo "  stow SKILL=<name>    stow one skill"
-	@echo "  unstow SKILL=<name>  unstow one skill"
-	@echo "  restow               re-stow every skill (refresh after edits)"
+	@echo "  restow               re-stow the skills package (after add/remove)"
 	@echo "  stow-home PACKAGE=<name>    stow one home package"
 	@echo "  unstow-home PACKAGE=<name>  unstow one home package"
 	@echo "  restow-home                 re-stow home packages"
@@ -64,31 +63,13 @@ bootstrap:
 	fi
 
 install: bootstrap
-	@for s in $(SKILLS); do \
-		echo "stow $$s"; \
-		$(STOW_SKILL) $$s; \
-	done
+	$(STOW_SKILL) $(SKILLS_PACKAGE)
 
 uninstall:
-	@for s in $(SKILLS); do \
-		echo "unstow $$s"; \
-		$(STOW_SKILL) -D $$s; \
-	done
-
-stow:
-	@test -n "$(SKILL)" || (echo "usage: make stow SKILL=<name>"; exit 1)
-	@$(MAKE) bootstrap
-	$(STOW_SKILL) $(SKILL)
-
-unstow:
-	@test -n "$(SKILL)" || (echo "usage: make unstow SKILL=<name>"; exit 1)
-	$(STOW_SKILL) -D $(SKILL)
+	$(STOW_SKILL) -D $(SKILLS_PACKAGE)
 
 restow: bootstrap
-	@for s in $(SKILLS); do \
-		echo "restow $$s"; \
-		$(STOW_SKILL) -R $$s; \
-	done
+	$(STOW_SKILL) -R $(SKILLS_PACKAGE)
 
 stow-home:
 	@test -n "$(PACKAGE)" || (echo "usage: make stow-home PACKAGE=<name>"; exit 1)
@@ -191,7 +172,7 @@ uninstall-aeq-awareness:
 
 list:
 	@echo "skills:"
-	@for s in $(SKILLS); do echo "  $$s"; done
+	@for s in $(SKILL_NAMES); do echo "  $$s"; done
 	@echo "home packages:"
 	@for p in $(HOME_PACKAGES); do echo "  $$p"; done
 
@@ -219,7 +200,7 @@ doctor:
 	fi
 	@echo
 	@echo "-- skills detected --"
-	@for s in $(SKILLS); do echo "  $$s"; done
+	@for s in $(SKILL_NAMES); do echo "  $$s"; done
 	@echo
 	@echo "-- home packages detected --"
 	@for p in $(HOME_PACKAGES); do echo "  $$p"; done

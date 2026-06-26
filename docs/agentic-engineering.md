@@ -1,6 +1,6 @@
 # agentic-engineering
 
-> Design-of-record for the `aeq` queue and the infra around it. Documentation only — never stowed. See the [`aeq`](../aeq/aeq/SKILL.md) skill for in-session usage.
+> Design-of-record for the `aeq` queue and the infra around it. Documentation only — never stowed. See the [`aeq`](../skills/aeq/SKILL.md) skill for in-session usage.
 
 ## North star
 
@@ -51,7 +51,7 @@ aeq block ID [-m REASON]    aeq done ID         aeq show ID
 aeq rm ID                   aeq path            aeq repo
 ```
 
-Full surface and the per-verb judgment live in the [`aeq` skill](../aeq/aeq/SKILL.md).
+Full surface and the per-verb judgment live in the [`aeq` skill](../skills/aeq/SKILL.md).
 
 ## Awareness hook
 

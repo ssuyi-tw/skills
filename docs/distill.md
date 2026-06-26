@@ -1,6 +1,6 @@
 # distill
 
-> Repo-reader notes for the [`distill`](../distill/distill/SKILL.md) skill. Documentation only — never stowed or installed (it lives outside the doubled skill dir).
+> Repo-reader notes for the [`distill`](../skills/distill/SKILL.md) skill. Documentation only — never stowed or installed (it lives outside the `skills/` tree).
 
 ## What it is
 
