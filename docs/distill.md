@@ -35,7 +35,7 @@ A short filter, then a conditional reach back to the user:
 
 ## What it produces
 
-A `DISTILL.md` in the OS temp dir, never the workspace. There is **no fixed shape** — length follows how much the session generated: one real insight is one entry; an empty session gets a three-line "nothing to distill" and stops. Headings are containers reached for as the material warrants, not a checklist — one per kind of signal kept:
+A `DISTILL.md` in its own folder under `~/etc/dump/` (`<YYYY-MM-DD>-<topic-slug>/`), never the workspace. There is **no fixed shape** — length follows how much the session generated: one real insight is one entry; an empty session gets a three-line "nothing to distill" and stops. Headings are containers reached for as the material warrants, not a checklist — one per kind of signal kept:
 
 - **Decisions** — chosen, why, rejected.
 - **Concepts** — a model or framing that clicked.

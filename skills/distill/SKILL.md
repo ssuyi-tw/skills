@@ -17,7 +17,7 @@ Method:
 2. Keep a line only if it survives the code deleted — if it means nothing without the diff beside it, it's noise; drop it.
 3. Before writing, scan the kept signal for *gaps* — a decision missing its *why*, a reversal whose lesson went unsaid, an item you can't place as durable or one-off. A gap is *missing* signal, not noise; only the user can supply it. Offer to fill the highest-value ones (≤3 questions, skippable), fold in the answers, and flag any left unfilled. Never guess — a guess injects fake signal.
 
-Write `DISTILL.md` to the OS temp dir (not the workspace); tell the user the path. Shape is free: one heading per kind of signal you kept, nothing padded, one insight one home.
+Write `DISTILL.md` into its own folder under `~/etc/dump/` (never the workspace) — `~/etc/dump/<YYYY-MM-DD>-<short-topic-slug>/DISTILL.md`, creating the folder. Tell the user the path. Shape is free: one heading per kind of signal you kept, nothing padded, one insight one home.
 
 Mark portable lessons/models with `→ foundation`, but only when the mark traces to a real turn (the user correcting the assistant, a measurement overturning a stated position, the user dictating a rule); otherwise leave it unmarked. A durable user preference gets `→ memory:feedback`.
 
