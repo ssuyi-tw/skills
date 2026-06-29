@@ -26,12 +26,15 @@ Done when every materially different reading and every load-bearing gap is named
 - Put the divergent readings to the user **as the options** — the readings you found *are* the multiple-choice.
 - Ask for the missing slots in the **same round** (one question set is cheapest for the user). Respect the tool's limits: a few questions, 2–4 options each.
 - **Only ask about load-bearing gaps** — ones that would change the answer. Skip trivia; over-asking is its own cost.
+- **Fold in the run choice** as the final question: run the sharpened prompt and return the answer (default), or just hand back the prompt? It's load-bearing — it decides what happens next — so it rides in this round, never a second turn.
 
 ### 3. Re-encode (now safe)
 
 - Rewrite the prompt around the user's answers: clean, structured, success criterion stated explicitly.
 - If anything is **still** unresolved (the user skipped it or said "you decide"), mark it inline as `[ASSUMED: …]` — **never bury an assumption**. The user must be able to see and override every guess.
-- Output the sharpened prompt plus a one-line note of what changed and what you assumed.
+- Show the sharpened prompt with a one-line note of what changed and what you assumed — then act on the run choice from step 2:
+  - **Run** (default): execute the sharpened prompt now, in the same turn. The answered questions are the agreement — don't make the user re-confirm.
+  - **Hand back**: stop at the prompt; the prompt itself is the deliverable (e.g. to reuse elsewhere).
 
 ## Guardrails
 
