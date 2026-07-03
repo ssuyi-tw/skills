@@ -1,51 +1,63 @@
 ---
 name: sharpen
-description: Sharpen a vague prompt before acting on it — surface what's underspecified and ask the user, instead of silently rewriting and guessing at the intent they never gave. Use when the user explicitly asks to sharpen / improve / tighten a prompt or request, or says they're unsure they've asked clearly. Triggered by "/sharpen", "improve this prompt", "help me ask this better".
+description: "Sharpen a vague prompt before acting on it — surface what's missing and ask the user, instead of silently rewriting and guessing at the intent they never gave. Use when the user explicitly asks to sharpen / improve / tighten a prompt or request, or says they're unsure they've asked clearly. Triggered by \"/sharpen\", \"improve this prompt\", \"help me ask this better\"."
 ---
 
 # Sharpen — tighten a vague prompt before acting on it
 
-A prompt is the user's **encoding** of what they want; a vague prompt is a lossy one. You cannot recover detail that was never encoded: rewriting it yourself only **re-encodes** what's already there — and "filling in" the gaps invents intent, passing your guess off as the user's requirement. Only the user holds the missing intent, so the real work is to **surface what's missing and ask**: their answer is the one move that adds intent; everything else re-encodes.
+A request travels down a chain: **expectation** (the product they want) → **intent** (the solution they have in mind) → **prompt** (the words they typed). A vague prompt lost something between two of those links, and *which* link leaked decides how hard you work.
 
-The slack in a vague prompt has **two origins that need different asks**:
+- **Prompt lost what intent held → lossy.** The solution was decided; the words just dropped part of it — a dangling reference, a missing constraint. Recover it: read the piece back, one confirm/veto. Cheap and shallow.
+- **Intent never fully formed → loose.** The solution itself was open. Resolve it: make them choose, which *creates* the intent. This is the only place exploring the readings is worth its cost.
 
-- **Lossy** — the intent *existed* but didn't reach the words. → **Recover** it (confirm or veto).
-- **Loose** — the intent was *never decided*; the frame is open. → **Resolve** it: make them choose, which *creates* intent that wasn't there.
+You cannot recover what was never encoded. Filling gaps yourself invents intent and passes your guess off as their requirement. Only their answer adds intent; everything else just re-encodes what was already there.
 
-Tag which dominates each gap — it picks the ask in step 2.
+## The one rule
 
-## The core rule — read before anything else
+Don't silently rewrite. The order is fixed — **diagnose → ask → re-encode** — and the ask is the gate: no re-encoding until they've answered. Skipping the ask is the single failure this skill exists to prevent.
 
-**Do not silently rewrite.** The default urge is to hand back a polished prompt; resist it. The order is fixed: **diagnose → ask → re-encode**, and the `AskUserQuestion` call in step 2 is the gate — you cannot reach the re-encode until the user has answered. Skipping the ask is the one failure this skill exists to prevent.
+## How hard to look — decide this first
+
+Effort is not a dial you set up front. It falls out of two cheap reads:
+
+- **Which link leaked?** — the lossy/loose read above. Dangling ref or dropped constraint → lossy (confirm); several live approaches or no stated success bar → loose (explore).
+- **What's at stake?** Cheap and reversible output → take the obvious reading and answer. Expensive or hard to undo → pay for a question round.
+
+Explore only when it's **loose *and* high-stakes**. Everywhere else, take the obvious reading, mark what you assumed, and move on — unless there's no obvious reading to take (a dangling reference carrying the whole request), where you still ask even at low stakes. Depth ≈ divergence × stakes.
 
 ## Flow
 
-### 1. Diagnose (do not rewrite yet)
+### 1. Diagnose — cheap first, deep only if forced
 
-- **Enumerate readings.** List every *materially different* way the request could be read, and the success criterion each implies. Force divergence — include at least one reading **other than** the obvious one.
-- **List missing load-bearing slots** — the ones that would change the answer: success criterion (what counts as a good answer?), scope / constraints, audience, output format.
-- **Flag dangling references:** "it / that / the usual / like before" with no clear referent.
-- **Tag each gap lossy or loose.** Dangling references and dropped constraints are usually **lossy** (a fact they know but omitted). Multiple live readings with no stated success criterion are usually **loose** (they haven't decided). This tag picks the ask in step 2.
+Run a fixed checklist first — pure lookup, no open reasoning:
 
-Done when every materially different reading and every load-bearing gap is named — not when the first plausible reading is in hand.
+- success criterion — what counts as a good answer?
+- scope / constraints
+- audience
+- output format
+- dangling references — "it / that / the usual / like before" with no clear referent
+
+For each gap **that would change the answer**, tag it lossy or loose (the two reads above pick which). Ignore gaps that wouldn't move the output.
+
+Only if the checklist leaves real ambiguity *and* the deliverable is expensive: enumerate the materially different readings, forcing at least one past the obvious. **Stop the moment the next reading wouldn't change the question you'd ask or the answer you'd give** — not when the list feels "complete." Exhaustiveness is the cost bomb; marginal value is the budget.
 
 ### 2. Ask — the only step that adds intent (use `AskUserQuestion`)
 
-- **Route each gap by its tag.** *Lossy* → **recover**: state the assumption or read back the referent, user confirms/vetoes (cheapest — they only fix what's wrong). *Loose* → **resolve**: the divergent readings you found *are* the options — make them pick; the choice supplies the intent.
-- Ask for the missing slots in the **same round** (one question set is cheapest for the user). Respect the tool's limits: a few questions, 2–4 options each.
-- **Only ask about load-bearing gaps.** Skip trivia; over-asking is its own cost.
-- **Fold in the run choice** as the final question — run it now and return the answer (default), or hand the prompt back? It's load-bearing, so it rides this round, never a separate turn.
+- Route by tag. **Lossy → recover:** state the assumption or read the referent back; they confirm or veto (cheapest — they fix only what's wrong). **Loose → resolve:** the divergent readings *are* the options; their pick supplies the intent.
+- One round. Ask every gap together, ranked by how much it moves the answer.
+- The tool caps you at ~3 questions — treat that cap as the budget, not a limit to fight. Past the top three, drop the rest to `[ASSUMED: …]` rather than opening another round.
+- Fold in the run choice as the last question: run it now (default), or hand the prompt back?
 
-### 3. Re-encode (now safe)
+### 3. Re-encode — now safe
 
-- Rewrite the prompt around the user's answers: clean, structured, success criterion stated explicitly.
-- If anything is **still** unresolved (the user skipped it or said "you decide"), mark it inline as `[ASSUMED: …]` — every guess must stay visible and overridable, **never buried**.
-- Show the sharpened prompt with a one-line note of what changed and what you assumed — then act on the run choice from step 2:
-  - **Run** (default): execute the sharpened prompt now, in the same turn. The answered questions are the agreement — don't make the user re-confirm.
+- Rewrite around their answers: clean, structured, success criterion stated explicitly.
+- Anything still open — they skipped it, said "you decide," or the prior was peaked enough that asking would have bought nothing — goes inline as `[ASSUMED: …]`. Assuming on a clear prior isn't a fallback; it's the cheapest control you have. Every guess stays visible and one word to override — never buried.
+- Show the sharpened prompt with a one-line note of what changed and what you assumed, then act on the run choice:
+  - **Run** (default): execute now, same turn. The answered questions are the agreement — don't make them re-confirm.
   - **Hand back**: stop at the prompt; the prompt itself is the deliverable (e.g. to reuse elsewhere).
 
 ## Guardrails
 
-- **Ask, don't guess.** When unsure whether a gap is load-bearing, asking is cheap; a wrong silent assumption is not.
-- **Don't add scope.** Sharpen what they asked; don't expand the request into something bigger.
-- **Re-check, then stop.** Answers can conflict or open a new load-bearing gap — if so, run one more targeted round. Stop when the gaps are closed or a round buys no new intent; whatever's still unresolved falls to `[ASSUMED: …]` (step 3). Don't interrogate forever.
+- **Assume, don't ask, when the prior is peaked; ask, don't guess, only when a gap both changes the answer and is genuinely open.** Two different cheap moves — pick by confidence, not by habit.
+- **Don't add scope.** Sharpen what they asked; don't grow the request into something bigger.
+- **Re-check, then stop.** If answers conflict or open a new answer-changing gap, run one more targeted round. Stop when the gaps close or a round buys no new intent; whatever's left falls to `[ASSUMED: …]`. Don't interrogate forever.
