@@ -1,6 +1,6 @@
 ---
 name: capture-english-lessons
-description: Distill this session's English lessons from Scott's own typed messages — grammar slips, unnatural phrasings, misunderstandings/misused words — into a dated diff-shaped lesson file under ~/etc/dump/english/. Run at the end of a session, in-context. Triggered by "/capture-english-lessons", "capture english lessons", "distill my english from this session".
+description: Distill this session's English lessons from Scott's own typed messages — unnatural phrasings (the main unit), grammar slips, misunderstandings/misused words — into a dated diff-shaped lesson file under ~/etc/dump/english/. Run at the end of a session, in-context. Triggered by "/capture-english-lessons", "capture english lessons", "distill my english from this session".
 disable-model-invocation: true
 ---
 
@@ -10,6 +10,14 @@ Per-session capture half of the English learning loop (synthesis half: `digest-e
 project-scoped in `~/etc/dump`). The session context itself is the corpus — you were there, you know
 what he meant, where the repair sequences were, and which phrasings caused friction. Capture while
 that is live instead of re-scanning transcripts later.
+
+## Goal
+
+The target is **concept→text bandwidth**, not error correction. Fluent production runs on stored
+multi-word chunks retrieved whole (Pawley & Syder; formulaic-language research), so the primary
+unit of capture is the **phrasing diff + its reusable chunk** — the thing he can retrieve next
+time instead of assembling word-by-word. Grammar slips are tracked only as monitoring load:
+un-automatized small grammar burns working memory that should go to expression.
 
 ## Corpus
 
@@ -23,12 +31,18 @@ stop — do not manufacture lessons.
 A lesson is a diff, never a rule. The bet (from the ssuyi-voice work): repeated exposure to his own
 before/afters converges faster than instruction, so no grammar explanations anywhere.
 
-1. **Mistakes** — grammar/spelling errors: `wrote → fix (class)`. Tag with the error classes from
-   `~/etc/dump/2026-07-06-english-learning-skill/ERROR-PROFILE.md`: 1 verb inflection (-s/-ed),
-   2 articles, 3 plurals, 4 verb complementation/gerund, 5 spelling. Log every instance — recurrence
-   counts are what the digest aggregates.
-2. **Better phrasing** — grammatical but non-native: `wrote → natural version`. Cap at ~5 per
-   session, highest-leverage first; a flood of "better" phrasings gets ignored.
+1. **Phrasing** — the main bucket. Grammatical-but-non-native or effortful constructions:
+   `wrote → natural version (family) [chunk: "..."]`. Tag each with a pattern family:
+   - `chunk` — a formulaic sequence/collocation exists for this ("close 411, favor 416" → "in favor of")
+   - `structure` — information structure / word order ("make us easier to read the whole graph" → "make the whole graph easier to read")
+   - `word-choice` — a more precise verb/noun exists ("continue the workflow from where was blocked" → "resume from where it left off")
+   When a reusable chunk is the payoff, name it in `[chunk: "..."]` — the digest tracks adoption
+   of named chunks across sessions. Log every genuine one; the quality bar is "he'd plausibly
+   reuse this construction", not a count cap.
+2. **Mistakes** — grammar/spelling errors, kept as monitoring-load data: `wrote → fix (class)`.
+   Classes: 1 verb inflection (-s/-ed), 2 articles, 3 plurals, 4 verb complementation/gerund,
+   5 spelling. Log every instance tersely — the digest only aggregates counts from these; they
+   are not the learning target.
 3. **Misunderstandings / misused words** — the bucket only in-context capture can fill: repair
    sequences ("no, I mean…"), a word used confidently with the wrong meaning, replies showing he
    read X as Y. Format: `said "X" → meant Y → the word/phrase: Z`. Empty most sessions; leave empty
@@ -44,18 +58,18 @@ fixed cross-repo contract; the digest skill reads this folder). Format:
 
 date: YYYY-MM-DD
 
+## Phrasing
+- wrote → natural (family) [chunk: "..."]
+
 ## Mistakes
 - wrote → fix (class N)
-
-## Better phrasing
-- wrote → natural
 
 ## Misunderstandings
 - (none) | said "X" → meant Y → Z
 ```
 
-One line per lesson, nothing else. After writing, show the file content in the reply so the
-exposure happens immediately, not only at digest time.
+One line per lesson, nothing else. After writing, show the Phrasing section in the reply so the
+exposure happens immediately, not only at digest time (Mistakes can stay in the file).
 
 ## Guardrails
 
