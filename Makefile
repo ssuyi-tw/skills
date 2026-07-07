@@ -10,12 +10,10 @@ SKILLS_PACKAGE := skills
 SKILL_NAMES    := $(sort $(notdir $(patsubst %/SKILL.md,%,$(wildcard skills/*/SKILL.md))))
 HOME_FILES    := $(filter-out %/.claude/CLAUDE.md,$(wildcard */.claude/*.md))
 HOME_PACKAGES := $(sort $(foreach f,$(HOME_FILES),$(firstword $(subst /, ,$(f)))))
-KARPATHY_PACKAGE := karpathy-guidelines
-KARPATHY_INCLUDE := @karpathy-guidelines.md
-COMMIT_STYLE_PACKAGE := commit-style
-COMMIT_STYLE_INCLUDE := @commit-style.md
-SLACK_STYLE_PACKAGE := slack-style
-SLACK_STYLE_INCLUDE := @slack-style.md
+# Home packages whose install also adds/removes an `@<package>.md` import in
+# CLAUDE.md. Each name is both the stow package and the include basename.
+# Adding one is a single entry here — it generates install-<name>/uninstall-<name>.
+CLAUDE_MD_PACKAGES := karpathy-guidelines commit-style slack-style
 GUARDRAIL_PACKAGE := git-guardrails
 GUARDRAIL_DIR     := $(CLAUDE_HOME)/hooks
 SETTINGS_JSON     := $(CLAUDE_HOME)/settings.json
@@ -30,7 +28,7 @@ STOW_HOME  := stow -d $(STOW_DIR) -t $(HOME_TARGET)
 
 .DEFAULT_GOAL := install
 
-.PHONY: help install uninstall restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-commit-style uninstall-commit-style install-slack-style uninstall-slack-style install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap
+.PHONY: help install uninstall restow stow-home unstow-home restow-home install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap
 
 help:
 	@echo "Targets:"
@@ -89,62 +87,33 @@ restow-home:
 		$(STOW_HOME) -R $$p; \
 	done
 
-install-karpathy-guidelines:
-	@mkdir -p $(CLAUDE_HOME)
-	$(STOW_HOME) $(KARPATHY_PACKAGE)
-	@touch $(CLAUDE_MD)
-	@if grep -Fxq '$(KARPATHY_INCLUDE)' $(CLAUDE_MD); then \
-		echo "$(CLAUDE_MD) already imports $(KARPATHY_INCLUDE)"; \
+# Generate install-<pkg>/uninstall-<pkg> for each CLAUDE_MD_PACKAGES entry.
+# Install stows the package and idempotently appends `@<pkg>.md` to CLAUDE.md;
+# uninstall strips that line and unstows. $$ escapes one expansion pass (eval),
+# $$$$ escapes two (eval + recipe) so the shell sees a literal $.
+define claude_md_pkg_rules
+.PHONY: install-$(1) uninstall-$(1)
+install-$(1):
+	@mkdir -p $$(CLAUDE_HOME)
+	$$(STOW_HOME) $(1)
+	@touch $$(CLAUDE_MD)
+	@if grep -Fxq '@$(1).md' $$(CLAUDE_MD); then \
+		echo "$$(CLAUDE_MD) already imports @$(1).md"; \
 	else \
-		printf '\n%s\n' '$(KARPATHY_INCLUDE)' >> $(CLAUDE_MD); \
-		echo "added $(KARPATHY_INCLUDE) to $(CLAUDE_MD)"; \
+		printf '\n%s\n' '@$(1).md' >> $$(CLAUDE_MD); \
+		echo "added @$(1).md to $$(CLAUDE_MD)"; \
 	fi
 
-uninstall-karpathy-guidelines:
-	@if [ -f $(CLAUDE_MD) ]; then \
-		tmp="$$(mktemp)"; \
-		grep -Fxv '$(KARPATHY_INCLUDE)' $(CLAUDE_MD) > "$$tmp"; \
-		mv "$$tmp" $(CLAUDE_MD); \
+uninstall-$(1):
+	@if [ -f $$(CLAUDE_MD) ]; then \
+		tmp="$$$$(mktemp)"; \
+		grep -Fxv '@$(1).md' $$(CLAUDE_MD) > "$$$$tmp"; \
+		mv "$$$$tmp" $$(CLAUDE_MD); \
 	fi
-	$(STOW_HOME) -D $(KARPATHY_PACKAGE)
+	$$(STOW_HOME) -D $(1)
+endef
 
-install-commit-style:
-	@mkdir -p $(CLAUDE_HOME)
-	$(STOW_HOME) $(COMMIT_STYLE_PACKAGE)
-	@touch $(CLAUDE_MD)
-	@if grep -Fxq '$(COMMIT_STYLE_INCLUDE)' $(CLAUDE_MD); then \
-		echo "$(CLAUDE_MD) already imports $(COMMIT_STYLE_INCLUDE)"; \
-	else \
-		printf '\n%s\n' '$(COMMIT_STYLE_INCLUDE)' >> $(CLAUDE_MD); \
-		echo "added $(COMMIT_STYLE_INCLUDE) to $(CLAUDE_MD)"; \
-	fi
-
-uninstall-commit-style:
-	@if [ -f $(CLAUDE_MD) ]; then \
-		tmp="$$(mktemp)"; \
-		grep -Fxv '$(COMMIT_STYLE_INCLUDE)' $(CLAUDE_MD) > "$$tmp"; \
-		mv "$$tmp" $(CLAUDE_MD); \
-	fi
-	$(STOW_HOME) -D $(COMMIT_STYLE_PACKAGE)
-
-install-slack-style:
-	@mkdir -p $(CLAUDE_HOME)
-	$(STOW_HOME) $(SLACK_STYLE_PACKAGE)
-	@touch $(CLAUDE_MD)
-	@if grep -Fxq '$(SLACK_STYLE_INCLUDE)' $(CLAUDE_MD); then \
-		echo "$(CLAUDE_MD) already imports $(SLACK_STYLE_INCLUDE)"; \
-	else \
-		printf '\n%s\n' '$(SLACK_STYLE_INCLUDE)' >> $(CLAUDE_MD); \
-		echo "added $(SLACK_STYLE_INCLUDE) to $(CLAUDE_MD)"; \
-	fi
-
-uninstall-slack-style:
-	@if [ -f $(CLAUDE_MD) ]; then \
-		tmp="$$(mktemp)"; \
-		grep -Fxv '$(SLACK_STYLE_INCLUDE)' $(CLAUDE_MD) > "$$tmp"; \
-		mv "$$tmp" $(CLAUDE_MD); \
-	fi
-	$(STOW_HOME) -D $(SLACK_STYLE_PACKAGE)
+$(foreach p,$(CLAUDE_MD_PACKAGES),$(eval $(call claude_md_pkg_rules,$(p))))
 
 # stow the hook script into ~/.claude/hooks, then register it as a Bash
 # PreToolUse hook in ~/.claude/settings.json (idempotent; preserves other keys).
