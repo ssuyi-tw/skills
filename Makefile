@@ -14,6 +14,8 @@ KARPATHY_PACKAGE := karpathy-guidelines
 KARPATHY_INCLUDE := @karpathy-guidelines.md
 COMMIT_STYLE_PACKAGE := commit-style
 COMMIT_STYLE_INCLUDE := @commit-style.md
+SLACK_STYLE_PACKAGE := slack-style
+SLACK_STYLE_INCLUDE := @slack-style.md
 GUARDRAIL_PACKAGE := git-guardrails
 GUARDRAIL_DIR     := $(CLAUDE_HOME)/hooks
 SETTINGS_JSON     := $(CLAUDE_HOME)/settings.json
@@ -28,7 +30,7 @@ STOW_HOME  := stow -d $(STOW_DIR) -t $(HOME_TARGET)
 
 .DEFAULT_GOAL := install
 
-.PHONY: help install uninstall restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-commit-style uninstall-commit-style install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap
+.PHONY: help install uninstall restow stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-commit-style uninstall-commit-style install-slack-style uninstall-slack-style install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap
 
 help:
 	@echo "Targets:"
@@ -38,6 +40,8 @@ help:
 	@echo "  uninstall-karpathy-guidelines  remove CLAUDE.md import + unstow guidelines"
 	@echo "  install-commit-style           stow commit-style + add CLAUDE.md import"
 	@echo "  uninstall-commit-style         remove CLAUDE.md import + unstow commit-style"
+	@echo "  install-slack-style            stow slack-style + add CLAUDE.md import"
+	@echo "  uninstall-slack-style          remove CLAUDE.md import + unstow slack-style"
 	@echo "  install-git-guardrails         stow PreToolUse hook + register in settings.json"
 	@echo "  uninstall-git-guardrails       unregister hook + unstow it"
 	@echo "  install-aeq          stow the aeq queue CLI into ~/.local/bin"
@@ -122,6 +126,25 @@ uninstall-commit-style:
 		mv "$$tmp" $(CLAUDE_MD); \
 	fi
 	$(STOW_HOME) -D $(COMMIT_STYLE_PACKAGE)
+
+install-slack-style:
+	@mkdir -p $(CLAUDE_HOME)
+	$(STOW_HOME) $(SLACK_STYLE_PACKAGE)
+	@touch $(CLAUDE_MD)
+	@if grep -Fxq '$(SLACK_STYLE_INCLUDE)' $(CLAUDE_MD); then \
+		echo "$(CLAUDE_MD) already imports $(SLACK_STYLE_INCLUDE)"; \
+	else \
+		printf '\n%s\n' '$(SLACK_STYLE_INCLUDE)' >> $(CLAUDE_MD); \
+		echo "added $(SLACK_STYLE_INCLUDE) to $(CLAUDE_MD)"; \
+	fi
+
+uninstall-slack-style:
+	@if [ -f $(CLAUDE_MD) ]; then \
+		tmp="$$(mktemp)"; \
+		grep -Fxv '$(SLACK_STYLE_INCLUDE)' $(CLAUDE_MD) > "$$tmp"; \
+		mv "$$tmp" $(CLAUDE_MD); \
+	fi
+	$(STOW_HOME) -D $(SLACK_STYLE_PACKAGE)
 
 # stow the hook script into ~/.claude/hooks, then register it as a Bash
 # PreToolUse hook in ~/.claude/settings.json (idempotent; preserves other keys).
