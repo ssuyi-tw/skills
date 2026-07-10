@@ -154,6 +154,12 @@ Ending the current step before it is genuinely done, because the agent's attenti
 
 _Avoid_: premature closure, the rush, rushing, shortcutting
 
+### Negation
+
+Steering by prohibition — telling the agent what *not* to do — drags the forbidden behaviour into context and makes it *more* available, not less. *Don't think of an elephant*, and the elephant is all there is; *never write verbose comments*, and verbosity is the pattern the agent has just read. The negation is a weak modifier the strongly activated concept overruns, so the ban half-reads as an instruction to do the thing. Its **leading word** is the *elephant*: whatever a prohibition names into the frame. Cure: prompt the **positive** — describe the target behaviour ("write one-line comments") so the banned one is never spoken. A prohibition earns its place only as a hard guardrail on a behaviour you cannot phrase positively; even then, pair it with the positive target so attention lands on what to do.
+
+*Avoid*: ironic rebound, don't-prompting, the pink elephant
+
 ### Duplication
 
 The same meaning given more than one **single source of truth**. It costs maintenance (change one place, you must change the others), costs tokens, and inflates prominence — repeating a meaning weights it on the ladder past its real rank. The accidental inverse of a **leading word**, which raises attention on purpose by repeating a token, never the meaning.
