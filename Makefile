@@ -5,6 +5,15 @@ SKILLS_TARGET := $(HOME)/.agent/skills
 CLAUDE_SKILLS := $(HOME)/.claude/skills
 CLAUDE_HOME   := $(HOME)/.claude
 CLAUDE_MD     := $(CLAUDE_HOME)/CLAUDE.md
+CODEX_HOME    := $(HOME)/.codex
+CODEX_MD      := $(CODEX_HOME)/AGENTS.md
+CODEX_SKILLS_DIR := $(CODEX_HOME)/skills
+CODEX_PERSONAL_SKILLS := $(CODEX_SKILLS_DIR)/personal
+CODEX_SKILLS_SOURCE := $(STOW_DIR)/skills
+CODEX_RTK := $(CODEX_HOME)/RTK.md
+CODEX_KARPATHY := $(CODEX_HOME)/karpathy-guidelines.md
+CODEX_COMMIT_STYLE := $(CODEX_HOME)/commit-style.md
+CODEX_SLACK_STYLE := $(CODEX_HOME)/slack-style.md
 HOME_TARGET   := $(HOME)
 SKILLS_PACKAGE := skills
 SKILL_NAMES    := $(sort $(notdir $(patsubst %/SKILL.md,%,$(wildcard skills/*/SKILL.md))))
@@ -28,12 +37,14 @@ STOW_HOME  := stow -d $(STOW_DIR) -t $(HOME_TARGET)
 
 .DEFAULT_GOAL := install
 
-.PHONY: help install uninstall restow stow-home unstow-home restow-home install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap
+.PHONY: help install uninstall restow install-codex uninstall-codex stow-home unstow-home restow-home install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap check check-skills check-shell check-markdown
 
 help:
 	@echo "Targets:"
 	@echo "  install              bootstrap link farm + stow skills"
 	@echo "  uninstall            unstow skills (leaves dirs/symlinks alone)"
+	@echo "  install-codex        link Codex AGENTS.md fragments + personal skills"
+	@echo "  uninstall-codex      remove Codex links/files managed by install-codex"
 	@echo "  install-karpathy-guidelines    stow guidelines + add CLAUDE.md import"
 	@echo "  uninstall-karpathy-guidelines  remove CLAUDE.md import + unstow guidelines"
 	@echo "  install-commit-style           stow commit-style + add CLAUDE.md import"
@@ -50,6 +61,10 @@ help:
 	@echo "  stow-home PACKAGE=<name>    stow one home package"
 	@echo "  unstow-home PACKAGE=<name>  unstow one home package"
 	@echo "  restow-home                 re-stow home packages"
+	@echo "  check                run all validation checks"
+	@echo "  check-skills         validate SKILL.md frontmatter and structure"
+	@echo "  check-shell          syntax-check all .sh scripts"
+	@echo "  check-markdown       lint markdown (requires markdownlint-cli2)"
 	@echo "  list                 print discovered skills"
 	@echo "  doctor               print resolved paths and current state"
 
@@ -72,6 +87,77 @@ uninstall:
 
 restow: bootstrap
 	$(STOW_SKILL) -R $(SKILLS_PACKAGE)
+
+install-codex:
+	@if [ ! -e $(CLAUDE_HOME)/RTK.md ]; then \
+		echo "error: $(CLAUDE_HOME)/RTK.md does not exist"; \
+		echo "       install-codex links ~/.codex/RTK.md -> $(CLAUDE_HOME)/RTK.md"; \
+		echo "       create RTK.md first, then re-run make install-codex"; \
+		exit 1; \
+	fi
+	@mkdir -p $(CODEX_SKILLS_DIR)
+	@if [ -e $(CODEX_PERSONAL_SKILLS) ] && [ ! -L $(CODEX_PERSONAL_SKILLS) ]; then \
+		echo "error: $(CODEX_PERSONAL_SKILLS) exists and is not a symlink — refusing to overwrite"; exit 1; \
+	fi
+	@if [ -L $(CODEX_PERSONAL_SKILLS) ] && [ "$$(readlink $(CODEX_PERSONAL_SKILLS))" != "$(CODEX_SKILLS_SOURCE)" ]; then \
+		echo "error: $(CODEX_PERSONAL_SKILLS) points to $$(readlink $(CODEX_PERSONAL_SKILLS)), expected $(CODEX_SKILLS_SOURCE)"; exit 1; \
+	fi
+	@if [ ! -L $(CODEX_PERSONAL_SKILLS) ]; then \
+		ln -s $(CODEX_SKILLS_SOURCE) $(CODEX_PERSONAL_SKILLS); \
+		echo "linked $(CODEX_PERSONAL_SKILLS) -> $(CODEX_SKILLS_SOURCE)"; \
+	else \
+		echo "$(CODEX_PERSONAL_SKILLS) already points to $(CODEX_SKILLS_SOURCE)"; \
+	fi
+	@if [ -e $(CODEX_RTK) ] && [ ! -L $(CODEX_RTK) ]; then \
+		echo "error: $(CODEX_RTK) exists and is not a symlink — refusing to overwrite"; exit 1; \
+	fi
+	@if [ -L $(CODEX_RTK) ] && [ "$$(readlink $(CODEX_RTK))" != "$(CLAUDE_HOME)/RTK.md" ]; then \
+		echo "error: $(CODEX_RTK) points to $$(readlink $(CODEX_RTK)), expected $(CLAUDE_HOME)/RTK.md"; exit 1; \
+	fi
+	@if [ ! -L $(CODEX_RTK) ]; then ln -s $(CLAUDE_HOME)/RTK.md $(CODEX_RTK); echo "linked $(CODEX_RTK) -> $(CLAUDE_HOME)/RTK.md"; fi
+	@if [ -e $(CODEX_KARPATHY) ] && [ ! -L $(CODEX_KARPATHY) ]; then \
+		echo "error: $(CODEX_KARPATHY) exists and is not a symlink — refusing to overwrite"; exit 1; \
+	fi
+	@if [ -L $(CODEX_KARPATHY) ] && [ "$$(readlink $(CODEX_KARPATHY))" != "$(STOW_DIR)/karpathy-guidelines/.claude/karpathy-guidelines.md" ]; then \
+		echo "error: $(CODEX_KARPATHY) points to $$(readlink $(CODEX_KARPATHY)), expected $(STOW_DIR)/karpathy-guidelines/.claude/karpathy-guidelines.md"; exit 1; \
+	fi
+	@if [ ! -L $(CODEX_KARPATHY) ]; then ln -s $(STOW_DIR)/karpathy-guidelines/.claude/karpathy-guidelines.md $(CODEX_KARPATHY); echo "linked $(CODEX_KARPATHY)"; fi
+	@if [ -e $(CODEX_COMMIT_STYLE) ] && [ ! -L $(CODEX_COMMIT_STYLE) ]; then \
+		echo "error: $(CODEX_COMMIT_STYLE) exists and is not a symlink — refusing to overwrite"; exit 1; \
+	fi
+	@if [ -L $(CODEX_COMMIT_STYLE) ] && [ "$$(readlink $(CODEX_COMMIT_STYLE))" != "$(STOW_DIR)/commit-style/.claude/commit-style.md" ]; then \
+		echo "error: $(CODEX_COMMIT_STYLE) points to $$(readlink $(CODEX_COMMIT_STYLE)), expected $(STOW_DIR)/commit-style/.claude/commit-style.md"; exit 1; \
+	fi
+	@if [ ! -L $(CODEX_COMMIT_STYLE) ]; then ln -s $(STOW_DIR)/commit-style/.claude/commit-style.md $(CODEX_COMMIT_STYLE); echo "linked $(CODEX_COMMIT_STYLE)"; fi
+	@if [ -e $(CODEX_SLACK_STYLE) ] && [ ! -L $(CODEX_SLACK_STYLE) ]; then \
+		echo "error: $(CODEX_SLACK_STYLE) exists and is not a symlink — refusing to overwrite"; exit 1; \
+	fi
+	@if [ -L $(CODEX_SLACK_STYLE) ] && [ "$$(readlink $(CODEX_SLACK_STYLE))" != "$(STOW_DIR)/slack-style/.claude/slack-style.md" ]; then \
+		echo "error: $(CODEX_SLACK_STYLE) points to $$(readlink $(CODEX_SLACK_STYLE)), expected $(STOW_DIR)/slack-style/.claude/slack-style.md"; exit 1; \
+	fi
+	@if [ ! -L $(CODEX_SLACK_STYLE) ]; then ln -s $(STOW_DIR)/slack-style/.claude/slack-style.md $(CODEX_SLACK_STYLE); echo "linked $(CODEX_SLACK_STYLE)"; fi
+	@if [ -e $(CODEX_MD) ] && [ ! -f $(CODEX_MD) ]; then \
+		echo "error: $(CODEX_MD) exists and is not a regular file — refusing to overwrite"; exit 1; \
+	fi
+	@tmp="$$(mktemp)" && printf '%s\n%s\n%s\n%s\n' '@RTK.md' '@karpathy-guidelines.md' '@commit-style.md' '@slack-style.md' > "$$tmp" && \
+		if [ -f $(CODEX_MD) ] && ! cmp -s "$$tmp" $(CODEX_MD); then \
+			rm "$$tmp"; echo "error: $(CODEX_MD) exists with different content — refusing to overwrite"; exit 1; \
+		fi && \
+		mv "$$tmp" $(CODEX_MD) && echo "wrote $(CODEX_MD)"
+
+uninstall-codex:
+	@if [ -L $(CODEX_PERSONAL_SKILLS) ] && [ "$$(readlink $(CODEX_PERSONAL_SKILLS))" = "$(CODEX_SKILLS_SOURCE)" ]; then \
+		rm $(CODEX_PERSONAL_SKILLS); echo "removed $(CODEX_PERSONAL_SKILLS)"; \
+	fi
+	@if [ -L $(CODEX_RTK) ] && [ "$$(readlink $(CODEX_RTK))" = "$(CLAUDE_HOME)/RTK.md" ]; then rm $(CODEX_RTK); echo "removed $(CODEX_RTK)"; fi
+	@if [ -L $(CODEX_KARPATHY) ] && [ "$$(readlink $(CODEX_KARPATHY))" = "$(STOW_DIR)/karpathy-guidelines/.claude/karpathy-guidelines.md" ]; then rm $(CODEX_KARPATHY); echo "removed $(CODEX_KARPATHY)"; fi
+	@if [ -L $(CODEX_COMMIT_STYLE) ] && [ "$$(readlink $(CODEX_COMMIT_STYLE))" = "$(STOW_DIR)/commit-style/.claude/commit-style.md" ]; then rm $(CODEX_COMMIT_STYLE); echo "removed $(CODEX_COMMIT_STYLE)"; fi
+	@if [ -L $(CODEX_SLACK_STYLE) ] && [ "$$(readlink $(CODEX_SLACK_STYLE))" = "$(STOW_DIR)/slack-style/.claude/slack-style.md" ]; then rm $(CODEX_SLACK_STYLE); echo "removed $(CODEX_SLACK_STYLE)"; fi
+	@tmp="$$(mktemp)" && printf '%s\n%s\n%s\n%s\n' '@RTK.md' '@karpathy-guidelines.md' '@commit-style.md' '@slack-style.md' > "$$tmp" && \
+		if [ -f $(CODEX_MD) ] && cmp -s "$$tmp" $(CODEX_MD); then \
+			rm $(CODEX_MD); echo "removed $(CODEX_MD)"; \
+		fi; \
+		rm -f "$$tmp"
 
 stow-home:
 	@test -n "$(PACKAGE)" || (echo "usage: make stow-home PACKAGE=<name>"; exit 1)
@@ -162,6 +248,25 @@ uninstall-aeq-awareness:
 	fi
 	$(STOW_HOME) -D $(AWARENESS_PACKAGE)
 
+check: check-skills check-shell check-markdown
+
+check-skills:
+	@python3 scripts/validate-skills.py
+
+check-shell:
+	@fail=0; for f in $$(find . -name '*.sh' -not -path './.git/*'); do \
+		bash -n "$$f" || fail=1; \
+	done; exit $$fail
+
+check-markdown:
+	@if command -v markdownlint-cli2 >/dev/null 2>&1; then \
+		markdownlint-cli2 --config .markdownlint.jsonc "README.md" "skills/*/SKILL.md" "docs/*.md"; \
+	elif command -v markdownlint >/dev/null 2>&1; then \
+		markdownlint -c .markdownlint.jsonc README.md skills/*/SKILL.md docs/*.md; \
+	else \
+		echo "skip: markdownlint not found (npm i -g markdownlint-cli2)"; \
+	fi
+
 list:
 	@echo "skills:"
 	@for s in $(SKILL_NAMES); do echo "  $$s"; done
@@ -190,6 +295,23 @@ doctor:
 	else \
 		echo "$(CLAUDE_MD) does not exist"; \
 	fi
+	@if [ -L $(CODEX_PERSONAL_SKILLS) ]; then \
+		echo "$(CODEX_PERSONAL_SKILLS) -> $$(readlink $(CODEX_PERSONAL_SKILLS))"; \
+	elif [ -e $(CODEX_PERSONAL_SKILLS) ]; then \
+		echo "$(CODEX_PERSONAL_SKILLS) exists (not a symlink)"; \
+	else \
+		echo "$(CODEX_PERSONAL_SKILLS) does not exist"; \
+	fi
+	@if [ -e $(CODEX_MD) ]; then echo "$(CODEX_MD) exists"; else echo "$(CODEX_MD) does not exist"; fi
+	@for f in $(CODEX_RTK) $(CODEX_KARPATHY) $(CODEX_COMMIT_STYLE) $(CODEX_SLACK_STYLE); do \
+		if [ -L $$f ]; then \
+			echo "$$f -> $$(readlink $$f)"; \
+		elif [ -e $$f ]; then \
+			echo "$$f exists (not a symlink)"; \
+		else \
+			echo "$$f does not exist"; \
+		fi; \
+	done
 	@echo
 	@echo "-- skills detected --"
 	@for s in $(SKILL_NAMES); do echo "  $$s"; done
@@ -199,3 +321,35 @@ doctor:
 	@echo
 	@echo "-- currently linked in $(CLAUDE_SKILLS) --"
 	@if [ -d $(CLAUDE_SKILLS) ]; then ls -1 $(CLAUDE_SKILLS) 2>/dev/null | sed 's/^/  /'; else echo "  (none)"; fi
+	@echo
+	@echo "-- required commands --"
+	@for cmd in stow jq python3; do \
+		if command -v $$cmd >/dev/null 2>&1; then \
+			echo "  $$cmd: $$(command -v $$cmd)"; \
+		else \
+			echo "  $$cmd: NOT FOUND"; \
+		fi; \
+	done
+	@if command -v aeq >/dev/null 2>&1; then \
+		echo "  aeq: $$(command -v aeq)"; \
+	elif [ -x $(LOCAL_BIN)/aeq ]; then \
+		echo "  aeq: $(LOCAL_BIN)/aeq (not on PATH)"; \
+	else \
+		echo "  aeq: NOT INSTALLED"; \
+	fi
+	@echo
+	@echo "-- hook registration --"
+	@if [ -f $(SETTINGS_JSON) ] && command -v jq >/dev/null 2>&1; then \
+		if jq -e '[.hooks.PreToolUse[]?.hooks[]?.command] | index("$(GUARDRAIL_CMD)")' $(SETTINGS_JSON) >/dev/null 2>&1; then \
+			echo "  git-guardrails (PreToolUse): registered"; \
+		else \
+			echo "  git-guardrails (PreToolUse): not registered"; \
+		fi; \
+		if jq -e '[.hooks.SessionStart[]?.hooks[]?.command] | index("$(AWARENESS_CMD)")' $(SETTINGS_JSON) >/dev/null 2>&1; then \
+			echo "  aeq-awareness (SessionStart): registered"; \
+		else \
+			echo "  aeq-awareness (SessionStart): not registered"; \
+		fi; \
+	else \
+		echo "  (cannot check — jq or settings.json missing)"; \
+	fi

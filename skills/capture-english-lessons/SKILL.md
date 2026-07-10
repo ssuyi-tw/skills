@@ -7,9 +7,9 @@ disable-model-invocation: true
 # capture-english-lessons
 
 Per-session capture half of the English learning loop (synthesis half: `digest-english-lessons`,
-project-scoped in `~/etc/dump`). The session context itself is the corpus — you were there, you know
-what he meant, where the repair sequences were, and which phrasings caused friction. Capture while
-that is live instead of re-scanning transcripts later.
+separate skill — not in this repo). The session context itself is the corpus — you were there, you
+know what he meant, where the repair sequences were, and which phrasings caused friction. Capture
+while that is live instead of re-scanning transcripts later.
 
 ## Goal
 

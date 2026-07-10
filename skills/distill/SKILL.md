@@ -21,4 +21,4 @@ Write `DISTILL.md` into its own folder under `~/etc/dump/` (never the workspace)
 
 Mark portable lessons/models with `→ foundation`, but only when the mark traces to a real turn (the user correcting the assistant, a measurement overturning a stated position, the user dictating a rule); otherwise leave it unmarked. A durable user preference gets `→ memory:feedback`.
 
-Chain: if anything was marked, offer to hand the marked subset to a persistence skill (memory by default) and run it on the user's OK. Distill recommends; it does not persist itself.
+Chain: if anything was marked and a persistence skill is available (e.g. memory), offer to hand the marked subset to it and run on the user's OK. If no persistence skill is present, note the marks and leave them for the user to triage. Distill recommends; it does not persist itself.

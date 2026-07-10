@@ -1,0 +1,14 @@
+{
+  // MD022: headings must be surrounded by blank lines
+  "MD022": true,
+  // MD032: lists must be surrounded by blank lines
+  "MD032": true,
+  // Disable line-length — skills are prose, not code
+  "MD013": false,
+  // Allow duplicate headings in different skills
+  "MD024": { "siblings_only": true },
+  // Allow trailing punctuation in headings (em-dashes, colons)
+  "MD026": false,
+  // Allow inline HTML (mermaid, details/summary)
+  "MD033": false
+}

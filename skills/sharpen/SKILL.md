@@ -41,7 +41,7 @@ For each gap **that would change the answer**, tag it lossy or loose (the two re
 
 Only if the checklist leaves real ambiguity *and* the deliverable is expensive: enumerate the materially different readings, forcing at least one past the obvious. **Stop the moment the next reading wouldn't change the question you'd ask or the answer you'd give** — not when the list feels "complete." Exhaustiveness is the cost bomb; marginal value is the budget.
 
-### 2. Ask — the only step that adds intent (use `AskUserQuestion`)
+### 2. Ask — the only step that adds intent (use a structured question tool if available)
 
 - Route by tag. **Lossy → recover:** state the assumption or read the referent back; they confirm or veto (cheapest — they fix only what's wrong). **Loose → resolve:** the divergent readings *are* the options; their pick supplies the intent.
 - One round. Ask every gap together, ranked by how much it moves the answer.

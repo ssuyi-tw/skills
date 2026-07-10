@@ -10,10 +10,13 @@ Installed via `stow` rather than an npm wrapper. Also includes optional home-lev
 | --- | --- |
 | [`aeq`](skills/aeq/SKILL.md) | Drives the private, per-repo agentic-engineering task queue (`aeq` CLI). See [docs/agentic-engineering.md](docs/agentic-engineering.md). |
 | [`blunt-mode`](skills/blunt-mode/SKILL.md) | Terse dev-chat register — strips filler and hedging, keeps every concrete fact. |
+| [`capture-english-lessons`](skills/capture-english-lessons/SKILL.md) | Distills English phrasing diffs from a session into a dated lesson file. Manual (`/capture-english-lessons`). |
 | [`distill`](skills/distill/SKILL.md) | Distills a session into a one-off `DISTILL.md` of durable concepts and reasoning — decisions, models, lessons. Manual (`/distill`). See [docs/distill.md](docs/distill.md). |
 | [`greeting`](skills/greeting/SKILL.md) | Casual greeting register when you open with "hi" / "hey" / etc. |
 | [`grilling`](skills/grilling/SKILL.md) | Interviews you relentlessly to stress-test a plan or design before building. |
 | [`handoff`](skills/handoff/SKILL.md) | Compacts the conversation into a handoff doc so a fresh agent can continue. Manual (`/handoff`). |
+| [`sharpen`](skills/sharpen/SKILL.md) | Tightens a vague prompt before acting — surfaces what's missing and asks. Manual (`/sharpen`). |
+| [`ssuyi-voice`](skills/ssuyi-voice/SKILL.md) | Voice and register calibration for natural written output. Manual. |
 | [`writing-great-skills`](skills/writing-great-skills/SKILL.md) | Reference for the vocabulary and principles that make a skill predictable. |
 
 ## Credits
@@ -47,10 +50,26 @@ guidance, hooks, and bins each remain their own stow package at the repo root.
 ├── karpathy-guidelines/        <- stow package for home-level Claude guidance
 │   └── .claude/
 │       └── karpathy-guidelines.md
+├── commit-style/               <- stow package for commit-style guidance
+│   └── .claude/
+│       └── commit-style.md
+├── slack-style/                <- stow package for slack-style guidance
+│   └── .claude/
+│       └── slack-style.md
 ├── git-guardrails/             <- stow package for a Claude Code hook
 │   └── .claude/
 │       └── hooks/
 │           └── block-dangerous-git.sh
+├── aeq-bin/                    <- stow package for aeq CLI -> ~/.local/bin/
+│   └── .local/bin/
+│       ├── aeq
+│       └── aeq-drain-supacode
+├── aeq-awareness/              <- stow package for aeq SessionStart hook
+│   └── .claude/
+│       └── hooks/
+│           └── aeq-session-awareness.sh
+├── docs/                       <- design-of-record docs (not stowed)
+├── scripts/                    <- validation and tooling
 ├── LICENSE
 ├── Makefile
 └── README.md
@@ -79,6 +98,45 @@ This keeps your existing `~/.claude/CLAUDE.md` as the aggregator. It stows only 
 
 ```bash
 make install-karpathy-guidelines
+```
+
+## Install Codex guidance and skills
+
+Codex gets a home layout that mirrors the Claude guidance aggregator, while
+keeping Codex's bundled system skills untouched.
+
+```bash
+make install-codex
+```
+
+`make install-codex` will:
+
+1. Create `~/.codex/skills/` if needed.
+2. Create `~/.codex/skills/personal` as a symlink to this repo's `skills/` directory.
+3. Create `~/.codex/AGENTS.md` with the same four imports used by `~/.claude/CLAUDE.md`.
+4. Link the imported guidance files into `~/.codex/`.
+
+**Prerequisite:** `~/.claude/RTK.md` must already exist (the Codex target symlinks to it).
+If you haven't set up RTK yet, the install will fail with an actionable error.
+
+Expected layout:
+
+```text
+~/.codex/
+├── AGENTS.md
+├── RTK.md -> ~/.claude/RTK.md
+├── karpathy-guidelines.md -> <repo>/karpathy-guidelines/.claude/karpathy-guidelines.md
+├── commit-style.md -> <repo>/commit-style/.claude/commit-style.md
+├── slack-style.md -> <repo>/slack-style/.claude/slack-style.md
+└── skills/
+    ├── .system/
+    └── personal -> <repo>/skills
+```
+
+To remove only the Codex links/files managed by this repo:
+
+```bash
+make uninstall-codex
 ```
 
 ## Install git guardrails (PreToolUse hook)
@@ -173,15 +231,32 @@ make list      # which skills this repo defines
 make doctor    # resolved paths and current symlink state
 ```
 
+## Validate
+
+Run the full check suite (skill metadata, shell syntax, markdown lint):
+
+```bash
+make check
+```
+
+Individual checks:
+
+```bash
+make check-skills      # frontmatter, naming, links, README coverage
+make check-shell       # bash -n on all .sh files
+make check-markdown    # markdownlint (skips if not installed)
+```
+
 ## Sharing
 
 The `skills/<name>/SKILL.md` layout is the common, tool-agnostic one, so others can install
 these without stow:
 
 - **skills.sh** — works as-is against the flat layout: `npx skills add <user>/<repo>`.
-- **Claude Code plugin marketplace** — add a `.claude-plugin/marketplace.json` pointing at
-  `skills/`, then consumers run `/plugin marketplace add <user>/<repo>` + `/plugin install`,
-  or `claude --plugin-dir <path>` locally.
+- **Claude Code plugin marketplace** (optional, not yet configured) — add a
+  `.claude-plugin/marketplace.json` pointing at `skills/`, then consumers run
+  `/plugin marketplace add <user>/<repo>` + `/plugin install`, or
+  `claude --plugin-dir <path>` locally.
 
 Those are copy-based installs for *other* machines. On your own machine you keep the live
 stow symlinks (this repo stays the single source of truth) — the two don't conflict.
