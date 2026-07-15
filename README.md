@@ -4,6 +4,9 @@ Personal Claude skills, managed with [GNU stow](https://www.gnu.org/software/sto
 
 Installed via `stow` rather than an npm wrapper. Also includes optional home-level Claude guidance.
 
+On Windows, use the Git-managed junction setup instead of GNU stow. See
+[Windows installation for Codex Desktop and Claude Code Desktop](docs/windows-install.md).
+
 ## Skills
 
 | Skill | What it does |
