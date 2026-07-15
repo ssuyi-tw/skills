@@ -3,6 +3,7 @@ SHELL := /bin/bash
 STOW_DIR      := $(CURDIR)
 SKILLS_TARGET := $(HOME)/.agent/skills
 CLAUDE_SKILLS := $(HOME)/.claude/skills
+PI_SKILLS     := $(HOME)/.pi/agent/skills
 CLAUDE_HOME   := $(HOME)/.claude
 CLAUDE_MD     := $(CLAUDE_HOME)/CLAUDE.md
 CODEX_HOME    := $(HOME)/.codex
@@ -37,7 +38,7 @@ STOW_HOME  := stow -d $(STOW_DIR) -t $(HOME_TARGET)
 
 .DEFAULT_GOAL := install
 
-.PHONY: help install uninstall restow install-codex uninstall-codex stow-home unstow-home restow-home install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap check check-skills check-shell check-markdown
+.PHONY: help install uninstall restow install-codex uninstall-codex install-pi uninstall-pi restow-pi stow-home unstow-home restow-home install-karpathy-guidelines uninstall-karpathy-guidelines install-commit-style uninstall-commit-style install-git-guardrails uninstall-git-guardrails install-aeq uninstall-aeq install-aeq-awareness uninstall-aeq-awareness list doctor bootstrap check check-skills check-shell check-markdown
 
 help:
 	@echo "Targets:"
@@ -46,6 +47,9 @@ help:
 	@echo "  install-codex        link Codex AGENTS.md fragments + personal skills"
 	@echo "  uninstall-codex      remove Codex links/files managed by install-codex"
 	@echo "  install-karpathy-guidelines    stow guidelines + add CLAUDE.md import"
+	@echo "  install-pi           stow skills into Pi's global skill directory"
+	@echo "  uninstall-pi         unstow skills from Pi's global skill directory"
+	@echo "  restow-pi            re-stow Pi skills (after add/remove)"
 	@echo "  uninstall-karpathy-guidelines  remove CLAUDE.md import + unstow guidelines"
 	@echo "  install-commit-style           stow commit-style + add CLAUDE.md import"
 	@echo "  uninstall-commit-style         remove CLAUDE.md import + unstow commit-style"
@@ -158,6 +162,17 @@ uninstall-codex:
 			rm $(CODEX_MD); echo "removed $(CODEX_MD)"; \
 		fi; \
 		rm -f "$$tmp"
+
+install-pi:
+	@mkdir -p $(PI_SKILLS)
+	stow -d $(STOW_DIR) -t $(PI_SKILLS) $(SKILLS_PACKAGE)
+
+uninstall-pi:
+	stow -d $(STOW_DIR) -t $(PI_SKILLS) -D $(SKILLS_PACKAGE)
+
+restow-pi:
+	@mkdir -p $(PI_SKILLS)
+	stow -d $(STOW_DIR) -t $(PI_SKILLS) -R $(SKILLS_PACKAGE)
 
 stow-home:
 	@test -n "$(PACKAGE)" || (echo "usage: make stow-home PACKAGE=<name>"; exit 1)
@@ -277,6 +292,7 @@ doctor:
 	@echo "STOW_DIR   = $(STOW_DIR)"
 	@echo "SKILLS_TARGET = $(SKILLS_TARGET)"
 	@echo "CLAUDE_SKILLS = $(CLAUDE_SKILLS)"
+	@echo "PI_SKILLS     = $(PI_SKILLS)"
 	@echo "HOME_TARGET   = $(HOME_TARGET)"
 	@echo
 	@echo "-- paths --"
@@ -288,6 +304,7 @@ doctor:
 		echo "$(SKILLS_TARGET) does not exist"; \
 	fi
 	@if [ -d $(CLAUDE_SKILLS) ]; then echo "$(CLAUDE_SKILLS) exists"; else echo "$(CLAUDE_SKILLS) does not exist"; fi
+	@if [ -d $(PI_SKILLS) ]; then echo "$(PI_SKILLS) exists"; else echo "$(PI_SKILLS) does not exist"; fi
 	@if [ -L $(CLAUDE_MD) ]; then \
 		echo "$(CLAUDE_MD) -> $$(readlink $(CLAUDE_MD))"; \
 	elif [ -e $(CLAUDE_MD) ]; then \
@@ -321,6 +338,9 @@ doctor:
 	@echo
 	@echo "-- currently linked in $(CLAUDE_SKILLS) --"
 	@if [ -d $(CLAUDE_SKILLS) ]; then ls -1 $(CLAUDE_SKILLS) 2>/dev/null | sed 's/^/  /'; else echo "  (none)"; fi
+	@echo
+	@echo "-- currently linked in $(PI_SKILLS) --"
+	@if [ -d $(PI_SKILLS) ]; then ls -1 $(PI_SKILLS) 2>/dev/null | sed 's/^/  /'; else echo "  (none)"; fi
 	@echo
 	@echo "-- required commands --"
 	@for cmd in stow jq python3; do \

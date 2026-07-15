@@ -92,6 +92,19 @@ make install
 2. Create `~/.agent/skills` as a symlink to `~/.claude/skills/`.
 3. Stow the `skills` package into `~/.agent/skills/` — each skill dir folds to a symlink under `~/.claude/skills/`.
 
+## Install for Pi
+
+Pi discovers global skills from `~/.pi/agent/skills/`. The source format is the same, so
+the existing skill directories can be stowed there directly:
+
+```bash
+make install-pi
+```
+
+This creates directory symlinks in Pi's skill directory; it does not copy or fork the
+skills. Restart Pi after installing, then invoke manual-only skills with commands such as
+`/skill:handoff` or `/skill:sharpen`.
+
 ## Install Karpathy guidelines
 
 This keeps your existing `~/.claude/CLAUDE.md` as the aggregator. It stows only `karpathy-guidelines.md`, then adds `@karpathy-guidelines.md` to `~/.claude/CLAUDE.md` if missing.
@@ -215,6 +228,8 @@ live through the directory symlink. `make restow` is only needed when you add a 
 ```bash
 make restow
 ```
+
+For Pi, use `make restow-pi` after adding or removing a skill directory.
 
 ## Refresh home guidance
 
