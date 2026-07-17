@@ -57,9 +57,6 @@ guidance, hooks, and bins each remain their own stow package at the repo root.
 ├── commit-style/               <- stow package for commit-style guidance
 │   └── .claude/
 │       └── commit-style.md
-├── english-context/            <- stow package for English communication context
-│   └── .claude/
-│       └── english-context.md
 ├── slack-style/                <- stow package for slack-style guidance
 │   └── .claude/
 │       └── slack-style.md
@@ -147,7 +144,6 @@ Expected layout:
 ├── RTK.md -> ~/.claude/RTK.md
 ├── karpathy-guidelines.md -> <repo>/karpathy-guidelines/.claude/karpathy-guidelines.md
 ├── commit-style.md -> <repo>/commit-style/.claude/commit-style.md
-├── english-context.md -> <repo>/english-context/.claude/english-context.md
 ├── slack-style.md -> <repo>/slack-style/.claude/slack-style.md
 └── skills/
     ├── .system/

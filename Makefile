@@ -14,7 +14,6 @@ CODEX_SKILLS_SOURCE := $(STOW_DIR)/skills
 CODEX_RTK := $(CODEX_HOME)/RTK.md
 CODEX_KARPATHY := $(CODEX_HOME)/karpathy-guidelines.md
 CODEX_COMMIT_STYLE := $(CODEX_HOME)/commit-style.md
-CODEX_ENGLISH_CONTEXT := $(CODEX_HOME)/english-context.md
 CODEX_SLACK_STYLE := $(CODEX_HOME)/slack-style.md
 HOME_TARGET   := $(HOME)
 SKILLS_PACKAGE := skills
@@ -24,7 +23,7 @@ HOME_PACKAGES := $(sort $(foreach f,$(HOME_FILES),$(firstword $(subst /, ,$(f)))
 # Home packages whose install also adds/removes an `@<package>.md` import in
 # CLAUDE.md. Each name is both the stow package and the include basename.
 # Adding one is a single entry here — it generates install-<name>/uninstall-<name>.
-CLAUDE_MD_PACKAGES := karpathy-guidelines commit-style english-context slack-style
+CLAUDE_MD_PACKAGES := karpathy-guidelines commit-style slack-style
 GUARDRAIL_PACKAGE := git-guardrails
 GUARDRAIL_DIR     := $(CLAUDE_HOME)/hooks
 SETTINGS_JSON     := $(CLAUDE_HOME)/settings.json
@@ -54,8 +53,6 @@ help:
 	@echo "  uninstall-karpathy-guidelines  remove CLAUDE.md import + unstow guidelines"
 	@echo "  install-commit-style           stow commit-style + add CLAUDE.md import"
 	@echo "  uninstall-commit-style         remove CLAUDE.md import + unstow commit-style"
-	@echo "  install-english-context        stow English context + add CLAUDE.md import"
-	@echo "  uninstall-english-context      remove CLAUDE.md import + unstow English context"
 	@echo "  install-slack-style            stow slack-style + add CLAUDE.md import"
 	@echo "  uninstall-slack-style          remove CLAUDE.md import + unstow slack-style"
 	@echo "  install-git-guardrails         stow PreToolUse hook + register in settings.json"
@@ -136,13 +133,6 @@ install-codex:
 		echo "error: $(CODEX_COMMIT_STYLE) points to $$(readlink $(CODEX_COMMIT_STYLE)), expected $(STOW_DIR)/commit-style/.claude/commit-style.md"; exit 1; \
 	fi
 	@if [ ! -L $(CODEX_COMMIT_STYLE) ]; then ln -s $(STOW_DIR)/commit-style/.claude/commit-style.md $(CODEX_COMMIT_STYLE); echo "linked $(CODEX_COMMIT_STYLE)"; fi
-	@if [ -e $(CODEX_ENGLISH_CONTEXT) ] && [ ! -L $(CODEX_ENGLISH_CONTEXT) ]; then \
-		echo "error: $(CODEX_ENGLISH_CONTEXT) exists and is not a symlink — refusing to overwrite"; exit 1; \
-	fi
-	@if [ -L $(CODEX_ENGLISH_CONTEXT) ] && [ "$$(readlink $(CODEX_ENGLISH_CONTEXT))" != "$(STOW_DIR)/english-context/.claude/english-context.md" ]; then \
-		echo "error: $(CODEX_ENGLISH_CONTEXT) points to $$(readlink $(CODEX_ENGLISH_CONTEXT)), expected $(STOW_DIR)/english-context/.claude/english-context.md"; exit 1; \
-	fi
-	@if [ ! -L $(CODEX_ENGLISH_CONTEXT) ]; then ln -s $(STOW_DIR)/english-context/.claude/english-context.md $(CODEX_ENGLISH_CONTEXT); echo "linked $(CODEX_ENGLISH_CONTEXT)"; fi
 	@if [ -e $(CODEX_SLACK_STYLE) ] && [ ! -L $(CODEX_SLACK_STYLE) ]; then \
 		echo "error: $(CODEX_SLACK_STYLE) exists and is not a symlink — refusing to overwrite"; exit 1; \
 	fi
@@ -153,7 +143,7 @@ install-codex:
 	@if [ -e $(CODEX_MD) ] && [ ! -f $(CODEX_MD) ]; then \
 		echo "error: $(CODEX_MD) exists and is not a regular file — refusing to overwrite"; exit 1; \
 	fi
-	@tmp="$$(mktemp)" && printf '%s\n%s\n%s\n%s\n%s\n' '@RTK.md' '@karpathy-guidelines.md' '@commit-style.md' '@english-context.md' '@slack-style.md' > "$$tmp" && \
+	@tmp="$$(mktemp)" && printf '%s\n%s\n%s\n%s\n' '@RTK.md' '@karpathy-guidelines.md' '@commit-style.md' '@slack-style.md' > "$$tmp" && \
 		if [ -f $(CODEX_MD) ] && ! cmp -s "$$tmp" $(CODEX_MD); then \
 			rm "$$tmp"; echo "error: $(CODEX_MD) exists with different content — refusing to overwrite"; exit 1; \
 		fi && \
@@ -166,9 +156,8 @@ uninstall-codex:
 	@if [ -L $(CODEX_RTK) ] && [ "$$(readlink $(CODEX_RTK))" = "$(CLAUDE_HOME)/RTK.md" ]; then rm $(CODEX_RTK); echo "removed $(CODEX_RTK)"; fi
 	@if [ -L $(CODEX_KARPATHY) ] && [ "$$(readlink $(CODEX_KARPATHY))" = "$(STOW_DIR)/karpathy-guidelines/.claude/karpathy-guidelines.md" ]; then rm $(CODEX_KARPATHY); echo "removed $(CODEX_KARPATHY)"; fi
 	@if [ -L $(CODEX_COMMIT_STYLE) ] && [ "$$(readlink $(CODEX_COMMIT_STYLE))" = "$(STOW_DIR)/commit-style/.claude/commit-style.md" ]; then rm $(CODEX_COMMIT_STYLE); echo "removed $(CODEX_COMMIT_STYLE)"; fi
-	@if [ -L $(CODEX_ENGLISH_CONTEXT) ] && [ "$$(readlink $(CODEX_ENGLISH_CONTEXT))" = "$(STOW_DIR)/english-context/.claude/english-context.md" ]; then rm $(CODEX_ENGLISH_CONTEXT); echo "removed $(CODEX_ENGLISH_CONTEXT)"; fi
 	@if [ -L $(CODEX_SLACK_STYLE) ] && [ "$$(readlink $(CODEX_SLACK_STYLE))" = "$(STOW_DIR)/slack-style/.claude/slack-style.md" ]; then rm $(CODEX_SLACK_STYLE); echo "removed $(CODEX_SLACK_STYLE)"; fi
-	@tmp="$$(mktemp)" && printf '%s\n%s\n%s\n%s\n%s\n' '@RTK.md' '@karpathy-guidelines.md' '@commit-style.md' '@english-context.md' '@slack-style.md' > "$$tmp" && \
+	@tmp="$$(mktemp)" && printf '%s\n%s\n%s\n%s\n' '@RTK.md' '@karpathy-guidelines.md' '@commit-style.md' '@slack-style.md' > "$$tmp" && \
 		if [ -f $(CODEX_MD) ] && cmp -s "$$tmp" $(CODEX_MD); then \
 			rm $(CODEX_MD); echo "removed $(CODEX_MD)"; \
 		fi; \
