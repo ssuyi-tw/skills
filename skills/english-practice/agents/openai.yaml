@@ -1,6 +1,0 @@
-interface:
-  display_name: "English Practice"
-  short_description: "Toggle session-long English coaching"
-  default_prompt: "Use $english-practice for this session."
-policy:
-  allow_implicit_invocation: false
