@@ -56,6 +56,9 @@ guidance, hooks, and bins each remain their own stow package at the repo root.
 ├── commit-style/               <- stow package for commit-style guidance
 │   └── .claude/
 │       └── commit-style.md
+├── english-context/            <- stow package for English communication context
+│   └── .claude/
+│       └── english-context.md
 ├── slack-style/                <- stow package for slack-style guidance
 │   └── .claude/
 │       └── slack-style.md
@@ -129,7 +132,7 @@ make install-codex
 
 1. Create `~/.codex/skills/` if needed.
 2. Create `~/.codex/skills/personal` as a symlink to this repo's `skills/` directory.
-3. Create `~/.codex/AGENTS.md` with the same four imports used by `~/.claude/CLAUDE.md`.
+3. Create `~/.codex/AGENTS.md` with the same five imports used by `~/.claude/CLAUDE.md`.
 4. Link the imported guidance files into `~/.codex/`.
 
 **Prerequisite:** `~/.claude/RTK.md` must already exist (the Codex target symlinks to it).
@@ -143,6 +146,7 @@ Expected layout:
 ├── RTK.md -> ~/.claude/RTK.md
 ├── karpathy-guidelines.md -> <repo>/karpathy-guidelines/.claude/karpathy-guidelines.md
 ├── commit-style.md -> <repo>/commit-style/.claude/commit-style.md
+├── english-context.md -> <repo>/english-context/.claude/english-context.md
 ├── slack-style.md -> <repo>/slack-style/.claude/slack-style.md
 └── skills/
     ├── .system/
