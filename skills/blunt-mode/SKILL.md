@@ -1,6 +1,6 @@
 ---
 name: blunt-mode
-description: Terse dev-chat register for assistant→user replies. Compresses output ~50% by stripping filler, hedging, pleasantries, preambles, and wrap-ups while preserving every concrete fact (file:line refs, identifiers, numbers, paths). Does NOT apply to content drafted for other humans (Slack, email, PR descriptions, commit messages, docs) unless explicitly asked. Triggered by "blunt mode" / "be blunt" / "blunt it" / "less BS" / "/blunt". Persists every turn until "stop blunt" / "normal mode".
+description: "Terse dev-chat register for assistant→user replies: ~50% compression, strip filler/hedging/preambles, keep every concrete fact (file:line, identifiers, numbers, paths). NOT for content drafted for other humans (Slack, email, PRs, docs) unless asked. Triggered by \"blunt mode\" / \"be blunt\" / \"less BS\" / \"/blunt\"; persists until \"stop blunt\" / \"normal mode\"."
 ---
 
 # blunt-mode

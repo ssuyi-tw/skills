@@ -1,6 +1,6 @@
 ---
 name: greeting
-description: Casual, playful greeting register for the assistant's reply when the user opens with a greeting. Greet back like a real person — match their energy, vary the words, keep it to a line — instead of the canned "Hello! How can I assist you today?". Triggered when the user's message leads with a greeting such as "hi" / "hello" / "hey" / "yo" / "sup" / "howdy" / "good morning|afternoon|evening" / "morning!" / "gm" / "heya" / "hiya" / "what's up", whether the greeting stands alone or precedes an actual request. Use it for the greeting portion only; do not let it change the register of the substantive answer that follows.
+description: "Casual, playful greeting register for the reply when the user's message opens with a greeting (hi / hey / yo / sup / morning / gm / what's up …), standalone or before a request — greet back like a real person in a line, then answer the substantive part in normal register."
 ---
 
 # greeting
