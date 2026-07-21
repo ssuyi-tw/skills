@@ -19,6 +19,7 @@ On Windows, use the Git-managed junction setup instead of GNU stow. See
 | [`greeting`](skills/greeting/SKILL.md) | Casual greeting register when you open with "hi" / "hey" / etc. |
 | [`grilling`](skills/grilling/SKILL.md) | Interviews you relentlessly to stress-test a plan or design before building. |
 | [`handoff`](skills/handoff/SKILL.md) | Compacts the conversation into a handoff doc so a fresh agent can continue. Manual (`/handoff`). |
+| [`i-have-adhd`](skills/i-have-adhd/SKILL.md) | Shapes responses for ADHD readers: action first, numbered steps, visible progress, and no tangents. |
 | [`sharpen`](skills/sharpen/SKILL.md) | Tightens a vague prompt before acting — surfaces what's missing and asks. Manual (`/sharpen`). |
 | [`ssuyi-voice`](skills/ssuyi-voice/SKILL.md) | Voice and register calibration for natural written output. Manual. |
 | [`writing-great-skills`](skills/writing-great-skills/SKILL.md) | Reference for the vocabulary and principles that make a skill predictable. |
@@ -30,6 +31,8 @@ Home-level `CLAUDE.md` is adapted from [`multica-ai/andrej-karpathy-skills`](htt
 `blunt-mode` is a terser, blunter cousin of [`caveman`](https://github.com/JuliusBrussee/caveman) by Julius Brussee.
 
 `handoff` mirrors [mattpocock/skills](https://github.com/mattpocock/skills/blob/main/skills/productivity/handoff/SKILL.md) by Matt Pocock.
+
+`i-have-adhd` is from [`ayghri/i-have-adhd`](https://github.com/ayghri/i-have-adhd/tree/main) by Ayoub G.
 
 `grilling` is from [mattpocock/skills](https://github.com/mattpocock/skills/blob/main/skills/productivity/grilling/SKILL.md) by Matt Pocock.
 
