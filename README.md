@@ -16,6 +16,7 @@ On Windows, use the Git-managed junction setup instead of GNU stow. See
 | [`capture-english-lessons`](skills/capture-english-lessons/SKILL.md) | Distills English phrasing diffs from a session into a dated lesson file. Manual (`/capture-english-lessons`). |
 | [`distill`](skills/distill/SKILL.md) | Distills a session into a one-off `DISTILL.md` of durable concepts and reasoning — decisions, models, lessons. Manual (`/distill`). See [docs/distill.md](docs/distill.md). |
 | [`english-practice`](skills/english-practice/SKILL.md) | Toggles focused English coaching for the current conversation. Manual (`$english-practice`). |
+| [`financial-choice-analysis`](skills/financial-choice-analysis/SKILL.md) | Unpacks financial choices through economic exchange, subjective valuation, and future behavioral effects. |
 | [`greeting`](skills/greeting/SKILL.md) | Casual greeting register when you open with "hi" / "hey" / etc. |
 | [`grilling`](skills/grilling/SKILL.md) | Interviews you relentlessly to stress-test a plan or design before building. |
 | [`handoff`](skills/handoff/SKILL.md) | Compacts the conversation into a handoff doc so a fresh agent can continue. Manual (`/handoff`). |
